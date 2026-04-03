@@ -1,4 +1,4 @@
-http://:8088 {
+http://100.87.156.88:8088 {
   basicauth /* {
     luis $2a$14$ghvGz.FG6OIGb5QPy98PvOChV.5kHjrq471QzEWb4tx6C98JI1GkG
   }
