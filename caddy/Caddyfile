@@ -1,0 +1,7 @@
+http://:8088 {
+  basicauth /* {
+    luis $2a$14$ghvGz.FG6OIGb5QPy98PvOChV.5kHjrq471QzEWb4tx6C98JI1GkG
+  }
+
+  reverse_proxy 127.0.0.1:3000
+}

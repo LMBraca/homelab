@@ -1,0 +1,49 @@
+services:
+  homeassistant:
+    image: homeassistant/home-assistant:stable
+    container_name: homeassistant
+    network_mode: host
+    volumes:
+      - ./ha-config:/config
+    environment:
+      - TZ=America/Tijuana
+    restart: unless-stopped
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    restart: unless-stopped
+
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt
+    container_name: zigbee2mqtt
+    volumes:
+      - ./z2m-data:/app/data
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=America/Tijuana
+    restart: "no"
+    depends_on:
+      - mosquitto
+
+  digital-twin-api:
+    build: ./api
+    container_name: digital-twin-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api/data:/app/data
+    environment:
+      - HA_URL=http://172.17.0.1:8123
+      - DB_PATH=/app/data/twin.db
+    env_file:
+      - ./api/.env
+    restart: unless-stopped

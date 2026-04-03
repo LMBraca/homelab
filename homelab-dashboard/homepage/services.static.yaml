@@ -1,0 +1,57 @@
+- Storage:
+    - Nextcloud Data Dir:
+        description: Space usage
+        widget:
+          type: customapi
+          url: http://dashboard-api:8787/api/nextcloud-disk-fields
+          refreshInterval: 60000
+          mappings:
+            - field: total
+              label: "Total"
+            - field: used
+              label: "Used"
+            - field: pct
+              label: "Used %"
+            - field: free
+              label: "Free"
+    - Backup Server Disk:
+        description: Backup laptop storage
+        widget:
+          type: customapi
+          url: http://dashboard-api:8787/api/backup-disk-fields
+          refreshInterval: 60000
+          mappings:
+            - field: total
+              label: "Total"
+            - field: used
+              label: "Used"
+            - field: pct
+              label: "Used %"
+            - field: free
+              label: "Free"
+- Stats:
+    - Main Server:
+        href: http://127.0.0.1:61208
+        description: Glances (main)
+        widget:
+          type: glances
+          url: http://glances:61208
+          version: 4
+          metric: info
+          disk:
+            - /
+          uptime: true
+          cputemp: true
+
+    - Backup Server:
+        href: http://100.90.102.52:61208
+        description: Glances (backup)
+        widget:
+          type: glances
+          url: http://100.90.102.52:61208
+          version: 4
+          metric: info
+          disk:
+            - /
+          uptime: true
+          cputemp: true

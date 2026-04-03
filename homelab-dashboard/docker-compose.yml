@@ -1,0 +1,38 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:v0.9.13
+    container_name: homepage
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./homepage:/app/config
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - HOMEPAGE_LOG_LEVEL=warn
+      - HOMEPAGE_ALLOWED_HOSTS=100.87.156.88:8088
+
+  glances:
+    image: nicolargo/glances:latest-full
+    container_name: glances
+    restart: unless-stopped
+    pid: host
+    privileged: true
+    environment:
+      - GLANCES_OPT=-w
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "127.0.0.1:61208:61208"
+  dashboard-api:
+    build: ./api
+    container_name: dashboard-api
+    restart: unless-stopped
+    env_file:
+      - ./api/dashboard-api.env
+    volumes:
+      - /var/snap/nextcloud/common/nextcloud/data:/var/snap/nextcloud/common/nextcloud/data:ro
+      - /var/run/tailscale/tailscaled.sock:/var/run/tailscale/tailscaled.sock
+      - /usr/bin/tailscale:/usr/bin/tailscale:ro
+      - /usr/sbin/tailscale:/usr/sbin/tailscale:ro

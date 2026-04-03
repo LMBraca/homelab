@@ -1,0 +1,97 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# ─── Digital Twin: Simulated Devices ───────────────────────
+# These template lights simulate Hue bulbs for development.
+# Remove this entire section once real Zigbee devices are paired.
+
+input_number:
+  sim_living_room_brightness:
+    name: "Sim Living Room Brightness"
+    min: 0
+    max: 255
+    step: 1
+    initial: 200
+  sim_bedroom_brightness:
+    name: "Sim Bedroom Brightness"
+    min: 0
+    max: 255
+    step: 1
+    initial: 180
+  sim_hallway_brightness:
+    name: "Sim Hallway Brightness"
+    min: 0
+    max: 255
+    step: 1
+    initial: 150
+
+input_boolean:
+  sim_living_room_light:
+    name: "Sim Living Room Light"
+    icon: mdi:ceiling-light
+  sim_bedroom_light:
+    name: "Sim Bedroom Light"
+    icon: mdi:lamp
+  sim_hallway_light:
+    name: "Sim Hallway Light"
+    icon: mdi:wall-sconce-round
+
+light:
+  - platform: template
+    lights:
+      living_room:
+        friendly_name: "Living Room Light"
+        value_template: "{{ states('input_boolean.sim_living_room_light') }}"
+        level_template: "{{ states('input_number.sim_living_room_brightness') | int }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            entity_id: input_boolean.sim_living_room_light
+        turn_off:
+          - service: input_boolean.turn_off
+            entity_id: input_boolean.sim_living_room_light
+        set_level:
+          - service: input_number.set_value
+            data:
+              entity_id: input_number.sim_living_room_brightness
+              value: "{{ brightness }}"
+
+      bedroom:
+        friendly_name: "Bedroom Light"
+        value_template: "{{ states('input_boolean.sim_bedroom_light') }}"
+        level_template: "{{ states('input_number.sim_bedroom_brightness') | int }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            entity_id: input_boolean.sim_bedroom_light
+        turn_off:
+          - service: input_boolean.turn_off
+            entity_id: input_boolean.sim_bedroom_light
+        set_level:
+          - service: input_number.set_value
+            data:
+              entity_id: input_number.sim_bedroom_brightness
+              value: "{{ brightness }}"
+
+      hallway:
+        friendly_name: "Hallway Light"
+        value_template: "{{ states('input_boolean.sim_hallway_light') }}"
+        level_template: "{{ states('input_number.sim_hallway_brightness') | int }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            entity_id: input_boolean.sim_hallway_light
+        turn_off:
+          - service: input_boolean.turn_off
+            entity_id: input_boolean.sim_hallway_light
+        set_level:
+          - service: input_number.set_value
+            data:
+              entity_id: input_number.sim_hallway_brightness
+              value: "{{ brightness }}"

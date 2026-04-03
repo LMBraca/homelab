@@ -1,0 +1,48 @@
+# Secrets — never commit
+**/.env
+**/dashboard-api.env
+**/secrets.yaml
+
+# Databases
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# Logs
+**/*.log
+**/*.log.*
+**/*.log.fault
+
+# Home Assistant runtime
+digitaltwin/ha-config/.storage/
+digitaltwin/ha-config/.cache/
+digitaltwin/ha-config/.cloud/
+digitaltwin/ha-config/deps/
+digitaltwin/ha-config/tts/
+digitaltwin/ha-config/.ha_run.lock
+digitaltwin/ha-config/home-assistant_v2.db*
+
+# Zigbee2MQTT runtime
+digitaltwin/z2m-data/devices.yaml
+digitaltwin/z2m-data/state.json
+
+# Mosquitto runtime
+digitaltwin/mosquitto/data/
+digitaltwin/mosquitto/log/
+
+# Dashboard runtime
+homelab-dashboard/homepage/services.yaml
+homelab-dashboard/homepage/generated/
+homelab-dashboard/homepage/logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+**/venv/
+
+# API runtime data
+**/api/data/
+
+# macOS
+.DS_Store

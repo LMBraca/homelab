@@ -1,0 +1,22 @@
+/* Preserve newline characters from API responses (customapi widgets) */
+.service-widget.customapi,
+.widget.customapi {
+  text-align: left !important;
+  white-space: pre-line !important;  /* renders \n as line breaks */
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.25rem;
+}
+
+/* Hide the top info widgets + search strip */
+#information-widgets,
+#information-widgets-right,
+#widgets-wrap {
+  display: none !important;
+}
+
+/* Remove the space it leaves */
+#services {
+  margin-top: 0 !important;
+}
