@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+BASE="$(cd "$(dirname "$0")" && pwd)"
+
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
 
-/opt/homelab-dashboard/generate_tailscale_services.sh
+"$BASE/generate_tailscale_services.sh"
 
-cat /opt/homelab-dashboard/homepage/services.static.yaml \
-    /opt/homelab-dashboard/homepage/generated/tailscale.yaml \
+cat "$BASE/homepage/services.static.yaml" \
+    "$BASE/homepage/generated/tailscale.yaml" \
   > "$TMP"
 
 # Only replace services.yaml if content changed
-if ! cmp -s "$TMP" /opt/homelab-dashboard/homepage/services.yaml; then
-  mv "$TMP" /opt/homelab-dashboard/homepage/services.yaml
+if ! cmp -s "$TMP" "$BASE/homepage/services.yaml"; then
+  mv "$TMP" "$BASE/homepage/services.yaml"
 else
   rm -f "$TMP"
 fi

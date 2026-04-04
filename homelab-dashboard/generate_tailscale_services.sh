@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUT="/opt/homelab-dashboard/homepage/generated/tailscale.yaml"
+OUT="$(cd "$(dirname "$0")" && pwd)/homepage/generated/tailscale.yaml"
+mkdir -p "$(dirname "$OUT")"
 json="$(tailscale status --json)"
 
 python3 - <<'PY' "$OUT" "$json"

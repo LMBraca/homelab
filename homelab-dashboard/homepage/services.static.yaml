@@ -1,3 +1,21 @@
+- Backup:
+    - Nextcloud Backup:
+        href: http://100.90.102.52:8081
+        description: Daily at 10:50am
+        widget:
+          type: customapi
+          url: http://100.90.102.52:8081/backup-last.json
+          refreshInterval: 60000
+          mappings:
+            - field: result
+              label: "Last result"
+            - field: finishedAt
+              label: "Finished at"
+            - field: durationSeconds
+              label: "Duration (s)"
+            - field: dbSize
+              label: "DB size"
+
 - Storage:
     - Nextcloud Data Dir:
         description: Space usage
@@ -31,7 +49,7 @@
               label: "Free"
 - Stats:
     - Main Server:
-        href: http://127.0.0.1:61208
+        href: http://100.87.156.88:61208
         description: Glances (main)
         widget:
           type: glances

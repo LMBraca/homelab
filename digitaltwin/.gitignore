@@ -1,0 +1,38 @@
+# Secrets — never commit
+api/.env
+
+# Database — runtime data, not source code
+api/data/
+
+# Home Assistant runtime files
+ha-config/home-assistant_v2.db*
+ha-config/home-assistant.log*
+ha-config/home-assistant.log.fault
+ha-config/.ha_run.lock
+ha-config/.storage/
+ha-config/.cache/
+
+# Zigbee2MQTT runtime
+z2m-data/devices.yaml
+z2m-data/state.json
+
+# Mosquitto data
+mosquitto/data/
+mosquitto/log/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# HA runtime directories
+ha-config/tts/
+ha-config/deps/
+ha-config/.cloud/
+ha-config/.ha_run.lock
+ha-config/home-assistant.log*
+ha-config/home-assistant.log.fault
+
+# Homepage runtime
+homepage/logs/
+homepage/generated/

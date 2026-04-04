@@ -46,3 +46,11 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Shell runtime files
+home/.sudo_as_admin_successful
+home/.wget-hsts
+home/.selected_editor
+
+# Nextcloud sample/doc files
+nextcloud/config/config.sample.php

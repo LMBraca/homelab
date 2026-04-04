@@ -1,0 +1,12 @@
+# Generated — never commit
+homepage/services.yaml
+homepage/generated/
+homepage/logs/
+
+# Secrets
+api/dashboard-api.env
+
+# Runtime
+__pycache__/
+*.pyc
+api/venv/

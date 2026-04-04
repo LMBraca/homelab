@@ -1,3 +1,17 @@
 ---
 background:
   opacity: 20
+
+layout:
+  Backup:
+    style: row
+    columns: 4
+  Storage:
+    style: row
+    columns: 2
+  Stats:
+    style: row
+    columns: 2
+  Network:
+    style: row
+    columns: 6

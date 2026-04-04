@@ -29,6 +29,8 @@ services:
     build: ./api
     container_name: dashboard-api
     restart: unless-stopped
+    ports:
+      - "8787:8787"
     env_file:
       - ./api/dashboard-api.env
     volumes:
