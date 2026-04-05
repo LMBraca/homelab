@@ -1,0 +1,322 @@
+/* register.css — Device registration modal (Phase 4) */
+
+/* ── Overlay ─────────────────────────────────────────────────────────────── */
+.reg-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(4px);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+}
+.reg-overlay.open { display: flex; }
+
+/* ── Modal shell ─────────────────────────────────────────────────────────── */
+.reg-modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  width: 480px;
+  max-width: 95vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 28px 70px rgba(0,0,0,0.65);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.reg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.reg-header-left { display: flex; align-items: center; gap: 6px; }
+.reg-back-btn {
+  color: var(--blue2);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  user-select: none;
+}
+.reg-back-btn:hover { background: var(--surface2); }
+.reg-title { font-size: 14px; font-weight: 600; }
+.reg-close {
+  background: none; border: none; color: var(--muted);
+  font-size: 15px; padding: 4px 7px; border-radius: 4px; cursor: pointer;
+}
+.reg-close:hover { background: var(--surface2); color: var(--text); }
+
+/* ── Step container ──────────────────────────────────────────────────────── */
+.reg-step { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+/* ── Step 1: List ────────────────────────────────────────────────────────── */
+.reg-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.reg-search-icon { font-size: 14px; color: var(--muted); }
+.reg-search {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 13px;
+}
+.reg-search::placeholder { color: var(--muted); }
+.reg-count { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+.reg-device-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface3) transparent;
+}
+
+.reg-loading-msg { padding: 20px 18px; font-size: 12px; color: var(--muted); text-align: center; }
+
+/* Domain group */
+.reg-domain-group { margin-bottom: 4px; }
+.reg-domain-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 18px 4px;
+}
+.reg-domain-icon  { font-size: 13px; }
+.reg-domain-label { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.reg-domain-count { font-size: 10px; background: var(--surface3); color: var(--muted2); border-radius: 8px; padding: 1px 6px; margin-left: auto; }
+
+/* Device row */
+.reg-device-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 18px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.reg-device-row:hover { background: var(--surface2); }
+.reg-device-main  { flex: 1; min-width: 0; }
+.reg-device-name  { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reg-device-id    { font-size: 10px; color: var(--muted); font-family: monospace; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reg-device-arrow { color: var(--muted); font-size: 16px; flex-shrink: 0; }
+
+/* Empty / error state */
+.reg-empty {
+  padding: 32px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.reg-empty-icon  { font-size: 28px; margin-bottom: 4px; }
+.reg-empty-title { font-size: 14px; font-weight: 500; color: var(--text); }
+.reg-empty-sub   { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.reg-retry-btn {
+  margin-top: 10px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  color: var(--muted2);
+  font-size: 12px;
+  cursor: pointer;
+}
+.reg-retry-btn:hover { background: var(--surface3); color: var(--text); }
+
+/* ── Step 2: Config ──────────────────────────────────────────────────────── */
+#reg-step-config {
+  padding: 16px 18px;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.reg-selected-device {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.reg-preview-icon { font-size: 22px; flex-shrink: 0; }
+.reg-preview-name { font-size: 13px; font-weight: 500; }
+.reg-preview-id   { font-size: 10px; color: var(--muted); font-family: monospace; margin-top: 2px; }
+
+.reg-field { display: flex; flex-direction: column; gap: 5px; }
+.reg-label { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.reg-optional { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted); }
+.reg-input, .reg-select {
+  padding: 8px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.reg-input:focus, .reg-select:focus { border-color: var(--blue2); }
+.reg-select { cursor: pointer; }
+.reg-hint { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+.reg-submit-error {
+  font-size: 12px;
+  color: var(--danger);
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 7px;
+  padding: 8px 12px;
+}
+
+.reg-config-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+  flex-shrink: 0;
+}
+
+.reg-btn-secondary {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted2);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.reg-btn-secondary:hover { background: var(--surface2); color: var(--text); }
+
+.reg-btn-primary {
+  padding: 7px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(99,102,241,0.5);
+  background: rgba(99,102,241,0.2);
+  color: var(--blue2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.reg-btn-primary:hover    { background: rgba(99,102,241,0.35); border-color: var(--blue2); }
+.reg-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Step 3: Success ─────────────────────────────────────────────────────── */
+.reg-success-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+  gap: 8px;
+}
+.reg-success-icon {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: rgba(34,197,94,0.15);
+  border: 2px solid rgba(34,197,94,0.4);
+  color: #22c55e;
+  font-size: 22px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 8px;
+}
+.reg-success-title { font-size: 15px; font-weight: 600; }
+.reg-success-sub   { font-size: 12px; color: var(--muted2); }
+
+/* ── Sidebar "Add Device" button ─────────────────────────────────────────── */
+.sidebar-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 9px 16px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  text-align: left;
+}
+.sidebar-add-btn:hover { background: var(--surface2); color: var(--blue2); }
+.sidebar-add-btn-icon { font-size: 14px; }
+
+/* ── Mobile ────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* Modal slides up from bottom as a sheet */
+  .reg-overlay { align-items: flex-end; }
+  .reg-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  /* Drag handle */
+  .reg-header {
+    padding-top: 22px;
+    position: relative;
+  }
+  .reg-header::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    border-radius: 2px;
+    background: var(--surface3);
+    position: absolute;
+    top: 8px; left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Device rows: larger tap targets */
+  .reg-device-row {
+    padding: 12px 18px;
+    min-height: 56px;
+  }
+  .reg-device-name  { font-size: 14px; }
+  .reg-device-id    { font-size: 11px; }
+  .reg-device-arrow { font-size: 20px; }
+
+  /* Inputs: 16px to prevent iOS auto-zoom */
+  .reg-input, .reg-select { font-size: 16px; padding: 10px 12px; }
+  .reg-search { font-size: 16px; }
+
+  /* Config step: more padding */
+  #reg-step-config { padding: 14px 16px; }
+
+  /* Footer buttons: full-width, tall */
+  .reg-config-footer { flex-direction: row; gap: 10px; padding-top: 8px; }
+  .reg-btn-secondary, .reg-btn-primary {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 48px;
+    text-align: center;
+    justify-content: center;
+  }
+}

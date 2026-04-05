@@ -145,8 +145,11 @@ def register_device(entity_id, domain, display_name=None,
 
 def update_device(entity_id, **fields):
     allowed = {"display_name", "room_id", "position_3d", "notes"}
-    updates = {k: v for k, v in fields.items() if k in allowed}
-    if "position_3d" in updates and updates["position_3d"] is not None:
+    # Only update fields that were explicitly provided (non-None).
+    # None means "not present in request body" — do NOT overwrite existing values.
+    # This prevents PUT /twin/devices/<id> with only position_3d from wiping room_id.
+    updates = {k: v for k, v in fields.items() if k in allowed and v is not None}
+    if "position_3d" in updates:
         updates["position_3d"] = json.dumps(updates["position_3d"])
     if not updates:
         return get_device(entity_id)

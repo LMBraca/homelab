@@ -6,16 +6,26 @@ that the frontend (Three.js) can use directly.
 import os
 import requests
 
-# Domains we never expose — internal HA plumbing
+# Domains we never expose — internal HA plumbing.
+#
+# input_boolean / input_number / input_select are HA helper primitives.
+# In this setup they back the template lights/sensors but are NOT real
+# devices — the template entities (light.*, binary_sensor.*, sensor.*,
+# lock.*) are what should be registered in the twin.
+# Hiding the helpers prevents confusion where a user registers
+# "input_boolean.sim_bedroom_light" instead of "light.bedroom".
 SKIP_DOMAINS = {
     "persistent_notification", "tts", "zone", "weather", "update",
     "conversation", "stt", "wake_word", "assist_pipeline", "tag",
     "event", "timer", "todo", "media_source", "image", "select",
+    # HA helpers — implementation details, not real devices
+    "input_boolean", "input_number", "input_select", "input_text",
+    "input_datetime", "input_button",
 }
 
 # Domains that can be controlled
 CONTROLLABLE = {
-    "light", "switch", "input_boolean", "fan", "cover",
+    "light", "switch", "fan", "cover",
     "climate", "media_player", "lock", "vacuum",
 }
 
@@ -75,9 +85,6 @@ class HomeAssistantClient:
         """
         Convert a raw HA state dict into our clean device model.
         db_meta is the row from SQLite (or None if not registered).
-
-        The 'capabilities' list tells the frontend exactly what controls
-        to render — no guessing needed.
         """
         entity_id = state["entity_id"]
         domain    = entity_id.split(".")[0]
@@ -114,9 +121,6 @@ class HomeAssistantClient:
             if supported & 1:
                 caps.append("speed")
 
-        elif domain in ["input_number", "number"]:
-            caps.append("set_value")
-
         elif domain == "sensor":
             caps.append("read_only")
 
@@ -124,9 +128,7 @@ class HomeAssistantClient:
             caps.append("read_only")
 
         # ── Live state ─────────────────────────────────────────────────
-        live = {
-            "state": state["state"],
-        }
+        live = {"state": state["state"]}
 
         if domain == "light":
             b = attrs.get("brightness")
@@ -143,8 +145,8 @@ class HomeAssistantClient:
 
         elif domain == "sensor":
             live.update({
-                "value":       state["state"],
-                "unit":        attrs.get("unit_of_measurement"),
+                "value":        state["state"],
+                "unit":         attrs.get("unit_of_measurement"),
                 "device_class": attrs.get("device_class"),
             })
 
@@ -168,17 +170,8 @@ class HomeAssistantClient:
 
         elif domain == "media_player":
             live.update({
-                "volume":   attrs.get("volume_level"),
-                "media":    attrs.get("media_title"),
-            })
-
-        elif domain in ["input_number", "number"]:
-            live.update({
-                "value":   state["state"],
-                "min":     attrs.get("min"),
-                "max":     attrs.get("max"),
-                "step":    attrs.get("step"),
-                "unit":    attrs.get("unit_of_measurement"),
+                "volume": attrs.get("volume_level"),
+                "media":  attrs.get("media_title"),
             })
 
         # strip None values from live
@@ -188,33 +181,26 @@ class HomeAssistantClient:
         meta = db_meta or {}
 
         return {
-            # Identity
-            "entity_id":    entity_id,
-            "domain":       domain,
-            "name":         (meta.get("display_name")
-                             or attrs.get("friendly_name")
-                             or entity_id),
-            "ha_name":      attrs.get("friendly_name", entity_id),
-
-            # What it can do
-            "capabilities": caps,
-            "controllable": domain in CONTROLLABLE,
-
-            # Live state from HA
-            "live":         live,
-
-            # Twin registration
-            "registered":      db_meta is not None,
-            "room_id":         meta.get("room_id"),
-            "position_3d":     meta.get("position_3d"),   # {"x":1.0,"y":2.4,"z":0.5}
-            "notes":           meta.get("notes", ""),
-            "registered_at":   meta.get("registered_at"),
+            "entity_id":     entity_id,
+            "domain":        domain,
+            "name":          (meta.get("display_name")
+                              or attrs.get("friendly_name")
+                              or entity_id),
+            "ha_name":       attrs.get("friendly_name", entity_id),
+            "capabilities":  caps,
+            "controllable":  domain in CONTROLLABLE,
+            "live":          live,
+            "registered":    db_meta is not None,
+            "room_id":       meta.get("room_id"),
+            "position_3d":   meta.get("position_3d"),
+            "notes":         meta.get("notes", ""),
+            "registered_at": meta.get("registered_at"),
         }
 
     def get_discovered_devices(self, domain_filter=None):
         """
         Returns all HA entities grouped by domain,
-        skipping internal HA plumbing.
+        skipping internal HA plumbing and raw helpers.
         """
         states = self.get_states()
         result = {}

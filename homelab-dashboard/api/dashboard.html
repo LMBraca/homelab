@@ -23,151 +23,189 @@
   --blue2:#818cf8;
   --cyan:#06b6d4;
   --r:12px;
+  --hh:56px;
 }
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh;padding-bottom:60px}
 
-/* Header */
-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:18px 28px;border-bottom:1px solid var(--border);
-  position:sticky;top:0;background:var(--bg);z-index:10;backdrop-filter:blur(8px);
+/* Full-height column layout — header + scrollable content */
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  overflow:hidden;
 }
-.logo{display:flex;align-items:center;gap:10px}
+body{display:flex;flex-direction:column}
+
+/* ── Header ──────────────────────────────────────────────────────── */
+header{
+  height:var(--hh);
+  display:flex;align-items:center;gap:20px;
+  padding:0 24px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface);
+  flex-shrink:0;
+}
+.logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .logo-dot{width:8px;height:8px;border-radius:50%;background:var(--success);animation:hb 3s ease-in-out infinite}
 @keyframes hb{0%,100%{opacity:1}50%{opacity:.4}}
 .logo-text{font-size:15px;font-weight:600;letter-spacing:-.02em}
-.header-right{display:flex;align-items:center;gap:16px}
+
+.tabs{display:flex;gap:2px;flex:1}
+.tab{
+  padding:6px 16px;border-radius:8px;
+  border:1px solid transparent;
+  background:none;color:var(--muted2);
+  font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;
+}
+.tab:hover{background:var(--surface2);color:var(--text)}
+.tab.active{background:rgba(99,102,241,.15);color:var(--blue2);border-color:rgba(99,102,241,.35)}
+
+.header-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
 .time{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 
-/* Layout */
-main{padding:24px 28px;display:flex;flex-direction:column;gap:28px;max-width:1400px}
+/* ── App area fills remaining height ──────────────────────────────── */
+#app{
+  flex:1;
+  min-height:0;    /* required for flex children to shrink below content size */
+  position:relative;
+  overflow:hidden;
+}
+
+/* Each view fills the app area */
+.view{
+  position:absolute;inset:0;
+  opacity:0;pointer-events:none;
+  transition:opacity .2s;
+  overflow-y:auto;   /* scroll within the view, not the page */
+}
+.view.active{opacity:1;pointer-events:auto}
+
+/* Twin view — no scroll, iframe fills it */
+#view-twin{overflow:hidden}
+#twin-iframe{width:100%;height:100%;border:none;display:block;background:var(--bg)}
+
+/* ── Dashboard layout ─────────────────────────────────────────────── */
+main{
+  padding:24px;
+  display:flex;flex-direction:column;gap:24px;
+  max-width:1200px;
+  padding-bottom:48px;
+}
 
 .section-title{
-  font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px;
+  font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px;
 }
 .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
 
-.grid{display:grid;gap:14px}
-.grid-2{grid-template-columns:repeat(2,1fr)}
-.grid-auto{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
 
-/* Card */
-.card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r);padding:18px 20px;transition:border-color .2s;
-}
-.card:hover{border-color:var(--border2)}
-.card.accent-blue{border-left:3px solid var(--blue)}
-.card.accent-cyan{border-left:3px solid var(--cyan)}
-.card.accent-success{border-left:3px solid var(--success)}
-.card.accent-danger{border-left:3px solid var(--danger)}
-.card.accent-running{border-left:3px solid var(--blue2);border-color:rgba(129,140,248,.25)}
+/* ── Card ─────────────────────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px}
+.card.bl-blue   {border-left:3px solid var(--blue)}
+.card.bl-cyan   {border-left:3px solid var(--cyan)}
+.card.bl-green  {border-left:3px solid var(--success)}
+.card.bl-red    {border-left:3px solid var(--danger)}
+.card.bl-running{border-left:3px solid var(--blue2)}
 
-.card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
-.card-title{font-size:13px;font-weight:500;color:var(--text)}
-.card-sub{font-size:11px;color:var(--muted);margin-top:2px}
-.card-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;flex-shrink:0}
-.badge-on     {background:rgba(34,197,94,.15); color:var(--success)}
-.badge-off    {background:rgba(255,255,255,.05);color:var(--muted)}
-.badge-success{background:rgba(34,197,94,.15); color:var(--success)}
-.badge-failed {background:rgba(239,68,68,.12);  color:var(--danger)}
-.badge-running{background:rgba(99,102,241,.15); color:var(--blue2)}
+.ch{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.ct{font-size:13px;font-weight:500}
+.cs{font-size:11px;color:var(--muted);margin-top:2px}
 
-/* Stat row */
-.stat-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.stat-row:last-child{margin-bottom:0}
-.stat-label{font-size:11px;color:var(--muted);width:38px;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em}
-.stat-bar{flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
-.stat-fill{height:100%;border-radius:2px;transition:width .5s ease}
-.fill-green{background:var(--success)}
-.fill-blue {background:var(--blue2)}
-.fill-cyan {background:var(--cyan)}
-.fill-warn {background:var(--warn)}
-.fill-red  {background:var(--danger)}
-.stat-val{font-size:12px;font-variant-numeric:tabular-nums;min-width:34px;text-align:right;color:var(--muted2)}
+.badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;flex-shrink:0;white-space:nowrap}
+.badge-on {background:rgba(34,197,94,.15);color:var(--success)}
+.badge-off{background:rgba(255,255,255,.06);color:var(--muted)}
+.badge-ok {background:rgba(34,197,94,.15);color:var(--success)}
+.badge-err{background:rgba(239,68,68,.12);color:var(--danger)}
+.badge-run{background:rgba(99,102,241,.15);color:var(--blue2)}
 
-/* Storage bar */
-.storage-bar{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin:12px 0 8px}
-.storage-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .5s}
-.storage-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
-.storage-labels b{color:var(--text)}
+/* ── Stat bars ────────────────────────────────────────────────────── */
+.sr{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.sr:last-child{margin-bottom:0}
+.sl{font-size:10px;color:var(--muted);width:34px;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em}
+.sb{flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.sf{height:100%;border-radius:2px;transition:width .5s}
+.fg{background:var(--success)}
+.fb{background:var(--blue2)}
+.fc{background:var(--cyan)}
+.fw{background:var(--warn)}
+.fr{background:var(--danger)}
+.sv{font-size:11px;font-variant-numeric:tabular-nums;min-width:30px;text-align:right;color:var(--muted2)}
 
-/* Network peers */
-.peer{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 12px;background:var(--surface2);border-radius:8px;
-}
-.peer-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.peer-dot.on {background:var(--success)}
-.peer-dot.off{background:var(--muted)}
-.peer-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.peer-ip  {font-size:11px;color:var(--muted);font-family:monospace;margin-top:1px}
-.peer-age {font-size:10px;color:var(--muted);margin-top:2px}
+/* ── Storage ──────────────────────────────────────────────────────── */
+.stbar{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin:10px 0 7px}
+.stfill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .5s}
+.stlabels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.stlabels b{color:var(--text)}
 
-/* HA device cards */
-.device-card{
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:10px;padding:14px;cursor:pointer;transition:all .15s;
-}
-.device-card:hover{border-color:var(--border2);background:var(--surface3)}
-.device-card.is-on{border-color:rgba(34,197,94,.2)}
-.device-name{font-size:13px;font-weight:500;margin-bottom:4px}
-.toggle-btn{
-  width:100%;padding:7px;border-radius:7px;border:1px solid var(--border);
-  background:transparent;color:var(--text);font-size:12px;cursor:pointer;
-  transition:all .15s;
-}
-.toggle-btn:hover{background:rgba(99,102,241,.2);border-color:var(--blue)}
-.brightness-wrap{margin-top:8px}
-.brightness-label{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px}
-input[type=range]{width:100%;accent-color:var(--blue2)}
-
-/* Backup card — idle/finished */
-.backup-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+/* ── Backup ───────────────────────────────────────────────────────── */
+.bm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
 .bm{background:var(--surface2);border-radius:8px;padding:12px}
-.bm-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
-.bm-value{font-size:18px;font-weight:600}
-.bm-sub{font-size:10px;color:var(--muted);margin-top:2px}
-.backup-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.bm-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.bm-v{font-size:18px;font-weight:600}
+.bm-s{font-size:10px;color:var(--muted);margin-top:2px}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 .btn{
-  padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;
-  cursor:pointer;border:1px solid var(--border);transition:all .15s;
-  text-decoration:none;display:inline-flex;align-items:center;gap:6px;
+  padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;
+  border:1px solid var(--border);background:transparent;color:var(--muted2);
+  transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;
 }
-.btn-primary{background:rgba(99,102,241,.2);color:var(--blue2);border-color:rgba(99,102,241,.4)}
-.btn-primary:hover{background:rgba(99,102,241,.35);border-color:var(--blue2)}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed}
-.btn-secondary{background:transparent;color:var(--muted2);}
-.btn-secondary:hover{background:var(--surface2);color:var(--text)}
+.btn:hover{background:var(--surface2);color:var(--text)}
+.btn-p{background:rgba(99,102,241,.2);color:var(--blue2);border-color:rgba(99,102,241,.4)}
+.btn-p:hover{background:rgba(99,102,241,.35);border-color:var(--blue2)}
+.btn-p:disabled{opacity:.4;cursor:not-allowed}
 
-/* Backup card — live progress */
-.live-metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:14px}
-.step-pill{
-  display:inline-flex;align-items:center;gap:6px;
-  background:rgba(99,102,241,.12);color:var(--blue2);
-  border-radius:20px;padding:4px 12px;font-size:12px;font-weight:500;
-}
-.step-pill::before{
-  content:'';display:inline-block;width:6px;height:6px;border-radius:50%;
-  background:var(--blue2);animation:pulse 1s ease-in-out infinite;
-}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
-.progress-wrap{margin-bottom:12px}
-.progress-info{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px}
-.progress-bar{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
-.progress-fill{height:100%;background:var(--blue2);border-radius:3px;transition:width .4s}
-.progress-fill.indeterminate{width:35%!important;animation:slide 1.6s ease-in-out infinite}
+.live-metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:14px}
+.step-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.12);color:var(--blue2);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:500}
+.step-pill::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--blue2);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.pbar{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.pfill{height:100%;background:var(--blue2);border-radius:3px;transition:width .4s}
+.pfill.ind{width:35%!important;animation:slide 1.6s ease-in-out infinite}
 @keyframes slide{0%{margin-left:0}50%{margin-left:65%}100%{margin-left:0}}
-.current-file{font-size:11px;font-family:monospace;color:var(--muted);background:var(--surface2);border-radius:6px;padding:8px 10px;margin-bottom:10px;word-break:break-all;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pinfo{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px}
+.curfile{font-size:11px;font-family:monospace;color:var(--muted);background:var(--surface2);border-radius:6px;padding:7px 10px;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* Misc */
-.spin{width:10px;height:10px;border:2px solid rgba(99,102,241,.3);border-top-color:var(--blue2);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-.temp-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;background:var(--surface2);border-radius:20px;padding:3px 10px;}
-.loading{color:var(--muted);font-size:12px;padding:8px 0}
-.error-msg{color:var(--danger);font-size:12px;padding:8px 0}
-.mono{font-size:11px;font-family:monospace;color:var(--muted);background:var(--surface2);border-radius:6px;padding:8px 10px;margin-top:10px;word-break:break-all}
+/* ── Digital Twin card ────────────────────────────────────────────── */
+.twin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.ts{background:var(--surface2);border-radius:10px;padding:14px 12px;display:flex;flex-direction:column;gap:3px}
+.ts-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.ts-value{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.ts-sub{font-size:11px;color:var(--muted2)}
+
+.twin-open{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;padding:11px;border-radius:9px;
+  border:1px solid rgba(99,102,241,.35);
+  background:rgba(99,102,241,.1);
+  color:var(--blue2);font-size:13px;font-weight:500;
+  cursor:pointer;transition:all .15s;
+}
+.twin-open:hover{background:rgba(99,102,241,.22);border-color:var(--blue2)}
+
+/* ── Peers ────────────────────────────────────────────────────────── */
+.peer{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:9px}
+.pdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.pdot.on{background:var(--success)}
+.pdot.off{background:var(--muted)}
+.pname{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pip{font-size:11px;color:var(--muted);font-family:monospace;margin-top:1px}
+.page{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* ── Misc ─────────────────────────────────────────────────────────── */
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;background:var(--surface2);border-radius:20px;padding:3px 10px}
+.loading{color:var(--muted);font-size:12px;padding:6px 0}
+.err{color:var(--danger);font-size:12px;padding:4px 0}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media(max-width:680px){
+  header{padding:0 14px;gap:12px}
+  main{padding:14px;gap:18px}
+  .grid2{grid-template-columns:1fr}
+  .twin-stats{grid-template-columns:1fr 1fr}
+  .bm-grid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
@@ -175,428 +213,334 @@ input[type=range]{width:100%;accent-color:var(--blue2)}
 <header>
   <div class="logo">
     <div class="logo-dot"></div>
-    <div><div class="logo-text">bracas homelab</div></div>
+    <div class="logo-text">bracas homelab</div>
   </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dashboard" onclick="showTab('dashboard')">Dashboard</button>
+    <button class="tab"        data-tab="twin"      onclick="showTab('twin')">Digital Twin</button>
+  </div>
+
   <div class="header-right">
     <div class="time" id="clock"></div>
   </div>
 </header>
 
-<main>
+<div id="app">
 
-  <!-- Server Stats -->
-  <div>
-    <div class="section-title">Server Stats</div>
-    <div class="grid grid-2">
-      <div class="card accent-blue" id="stats-main"><div class="loading">Loading…</div></div>
-      <div class="card accent-cyan" id="stats-backup"><div class="loading">Loading…</div></div>
-    </div>
+  <!-- Dashboard view -->
+  <div class="view active" id="view-dashboard">
+    <main>
+
+      <div>
+        <div class="section-title">Servers</div>
+        <div class="grid2">
+          <div class="card bl-blue" id="stats-main">  <div class="loading">Loading…</div></div>
+          <div class="card bl-cyan" id="stats-backup"><div class="loading">Loading…</div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">Storage</div>
+        <div class="grid2">
+          <div class="card" id="st-nc">  <div class="loading">Loading…</div></div>
+          <div class="card" id="st-bck"><div class="loading">Loading…</div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">Backup</div>
+        <div class="card" id="backup"><div class="loading">Loading…</div></div>
+      </div>
+
+      <div>
+        <div class="section-title">Digital Twin</div>
+        <div class="card bl-blue" id="twin-card">
+          <div class="ch">
+            <div>
+              <div class="ct">3D Home</div>
+              <div class="cs">Real-time device status</div>
+            </div>
+            <span class="badge badge-off" id="twin-badge">connecting…</span>
+          </div>
+          <div class="twin-stats">
+            <div class="ts">
+              <div class="ts-label">Devices</div>
+              <div class="ts-value" id="tn-total">—</div>
+            </div>
+            <div class="ts">
+              <div class="ts-label">Lights On</div>
+              <div class="ts-value" id="tn-lights">—</div>
+            </div>
+            <div class="ts">
+              <div class="ts-label">Motion</div>
+              <div class="ts-value" id="tn-motion">—</div>
+            </div>
+            <div class="ts">
+              <div class="ts-label">Doors</div>
+              <div class="ts-value" id="tn-doors">—</div>
+            </div>
+          </div>
+          <button class="twin-open" onclick="showTab('twin')">Open Digital Twin →</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">Network — Tailscale</div>
+        <div class="grid-auto" id="peers"><div class="loading">Loading…</div></div>
+      </div>
+
+    </main>
   </div>
 
-  <!-- Storage -->
-  <div>
-    <div class="section-title">Storage</div>
-    <div class="grid grid-2">
-      <div class="card" id="storage-nextcloud"><div class="loading">Loading…</div></div>
-      <div class="card" id="storage-backup"><div class="loading">Loading…</div></div>
-    </div>
+  <!-- Digital Twin view -->
+  <div class="view" id="view-twin">
+    <iframe id="twin-iframe" src="about:blank" title="Digital Twin"></iframe>
   </div>
 
-  <!-- Backup Status -->
-  <div>
-    <div class="section-title">Backup</div>
-    <div class="card" id="backup-status"><div class="loading">Loading…</div></div>
-  </div>
-
-  <!-- Network -->
-  <div>
-    <div class="section-title">Network — Tailscale</div>
-    <div class="grid grid-auto" id="network-peers"><div class="loading">Loading…</div></div>
-  </div>
-
-  <!-- Home Assistant -->
-  <div>
-    <div class="section-title">Home Assistant</div>
-    <div id="ha-section"><div class="loading">Loading…</div></div>
-  </div>
-
-</main>
+</div>
 
 <script>
-const BACKUP_DASH_URL = 'http://100.90.102.52:8081';
+const TWIN_HOST = location.hostname + ':8090';
+const TWIN_URL  = 'http://' + TWIN_HOST;
+const TWIN_API  = TWIN_URL + '/api/v1';
+const BACKUP_URL = 'http://100.90.102.52:8081';
 
-// ── Utils ─────────────────────────────────────────────────────────────
-async function api(path) {
-  const r = await fetch(path + '?_=' + Date.now());
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  return r.json();
+// ── Tab switching ──────────────────────────────────────────────────────
+let twinLoaded = false;
+
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.tab === name)
+  );
+  document.querySelectorAll('.view').forEach(v =>
+    v.classList.toggle('active', v.id === 'view-' + name)
+  );
+  if (name === 'twin' && !twinLoaded) {
+    twinLoaded = true;
+    document.getElementById('twin-iframe').src = TWIN_URL;
+  }
 }
 
-function pct_color(p) {
-  if (p >= 90) return 'fill-red';
-  if (p >= 75) return 'fill-warn';
-  if (p >= 50) return 'fill-blue';
-  return 'fill-green';
-}
+// ── Utilities ──────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const set = (id, html) => { const e = $(id); if (e) e.innerHTML = html; };
+const api = path => fetch(path + '?_=' + Date.now()).then(r => { if (!r.ok) throw r; return r.json(); });
 
-function stat_row(label, val, color) {
-  color = color || pct_color(val);
-  return `<div class="stat-row">
-    <div class="stat-label">${label}</div>
-    <div class="stat-bar"><div class="stat-fill ${color}" style="width:${val}%"></div></div>
-    <div class="stat-val">${val}%</div>
-  </div>`;
-}
-
-function fmt_dur(s) {
-  if (s == null || s === '') return '—';
-  s = parseInt(s);
+function fmtDur(s) {
+  if (!s) return '—'; s = +s;
   if (s < 60)   return s + 's';
   if (s < 3600) return Math.floor(s/60) + 'm ' + (s%60) + 's';
-  return Math.floor(s/3600) + 'h ' + Math.floor(s%3600/60) + 'm';
+  return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
 }
-
-function fmt_ago(ep) {
+function fmtAgo(ep) {
   const d = Math.floor(Date.now()/1000 - ep);
   if (d < 60)    return d + 's ago';
   if (d < 3600)  return Math.floor(d/60) + 'm ago';
   if (d < 86400) return Math.floor(d/3600) + 'h ago';
   return Math.floor(d/86400) + 'd ago';
 }
+function barColor(p) {
+  if (p >= 90) return 'fr'; if (p >= 75) return 'fw';
+  if (p >= 50) return 'fb'; return 'fg';
+}
+function statRow(label, val, cls) {
+  cls = cls || barColor(val);
+  return `<div class="sr">
+    <div class="sl">${label}</div>
+    <div class="sb"><div class="sf ${cls}" style="width:${val}%"></div></div>
+    <div class="sv">${val}%</div>
+  </div>`;
+}
+function loop(fn, ms) { fn(); setInterval(fn, ms); }
 
-function el(id) { return document.getElementById(id); }
-function set(id, html) { const e = el(id); if (e) e.innerHTML = html; }
-
-// ── Clock ─────────────────────────────────────────────────────────────
-function update_clock() {
-  el('clock').textContent = new Date().toLocaleString('en-US', {
+// ── Clock ──────────────────────────────────────────────────────────────
+(function tick() {
+  $('clock').textContent = new Date().toLocaleString('en-US', {
     weekday:'short', month:'short', day:'numeric',
     hour:'2-digit', minute:'2-digit', second:'2-digit'
   });
-}
-update_clock();
-setInterval(update_clock, 1000);
+  setTimeout(tick, 1000);
+})();
 
-// ── Module runner ─────────────────────────────────────────────────────
-function module(fn, interval_ms) {
-  fn();
-  setInterval(fn, interval_ms);
-}
-
-// ── Server Stats ──────────────────────────────────────────────────────
-function render_stats(id, name, data) {
-  if (data.error) {
-    set(id, `<div class="card-header"><div class="card-title">${name}</div></div>
-             <div class="error-msg">Unreachable — ${data.error}</div>`);
+// ── Server stats ───────────────────────────────────────────────────────
+function renderStats(id, name, d) {
+  if (d.error) {
+    set(id, `<div class="ch"><div class="ct">${name}</div></div><div class="err">Unreachable</div>`);
     return;
   }
-  const temp_html = data.temp != null
-    ? `<span class="temp-chip">🌡 ${data.temp}°C</span>`
-    : '';
+  const tmp = d.temp != null ? `<span class="chip">${d.temp}°C</span>` : '';
   set(id, `
-    <div class="card-header">
-      <div><div class="card-title">${name}</div>
-           <div class="card-sub">${data.uptime || '—'}</div></div>
-      ${temp_html}
+    <div class="ch">
+      <div><div class="ct">${name}</div><div class="cs">${d.uptime||'—'}</div></div>
+      ${tmp}
     </div>
-    ${stat_row('CPU',  data.cpu)}
-    ${stat_row('MEM',  data.mem,  pct_color(data.mem))}
-    ${stat_row('SWAP', data.swap, data.swap > 50 ? 'fill-warn' : 'fill-cyan')}
-    ${data.disk != null ? stat_row('DISK', data.disk) : ''}
+    ${statRow('CPU',  d.cpu)}
+    ${statRow('MEM',  d.mem)}
+    ${statRow('SWAP', d.swap, d.swap > 50 ? 'fw' : 'fc')}
+    ${d.disk != null ? statRow('DISK', d.disk) : ''}
   `);
 }
 
-module(async () => {
-  try { render_stats('stats-main',   'Main Server (bracas)',      await api('/api/glances/main')); }
-  catch(e) { set('stats-main',   `<div class="error-msg">Main server unreachable</div>`); }
-  try { render_stats('stats-backup', 'Backup Server (bracasbck)', await api('/api/glances/backup')); }
-  catch(e) { set('stats-backup', `<div class="error-msg">Backup server unreachable</div>`); }
+loop(async () => {
+  const [main, bck] = await Promise.allSettled([
+    api('/api/glances/main'), api('/api/glances/backup'),
+  ]);
+  renderStats('stats-main',   'Main Server (bracas)',      main.status === 'fulfilled' ? main.value  : {error:1});
+  renderStats('stats-backup', 'Backup Server (bracasbck)', bck.status  === 'fulfilled' ? bck.value   : {error:1});
 }, 10000);
 
-// ── Storage ───────────────────────────────────────────────────────────
-function storage_card(id, title, sub, data) {
-  if (data.error || data.total === 'n/a') {
-    set(id, `<div class="card-header"><div class="card-title">${title}</div></div>
-             <div class="error-msg">Unavailable</div>`);
+// ── Storage ────────────────────────────────────────────────────────────
+function renderStorage(id, title, sub, d) {
+  if (!d || d.total === 'n/a') {
+    set(id, `<div class="ch"><div class="ct">${title}</div></div><div class="err">Unavailable</div>`);
     return;
   }
-  const pct = parseFloat(data.pct) || 0;
+  const p = parseFloat(d.pct) || 0;
   set(id, `
-    <div class="card-header">
-      <div><div class="card-title">${title}</div>
-           <div class="card-sub">${sub}</div></div>
-      <span class="card-badge ${pct > 80 ? 'badge-failed' : 'badge-on'}">${data.pct}</span>
+    <div class="ch">
+      <div><div class="ct">${title}</div><div class="cs">${sub}</div></div>
+      <span class="badge ${p > 80 ? 'badge-err' : 'badge-ok'}">${d.pct}</span>
     </div>
-    <div class="storage-bar">
-      <div class="storage-fill" style="width:${pct}%"></div>
-    </div>
-    <div class="storage-labels">
-      <span>Used <b>${data.used}</b></span>
-      <span>Free <b>${data.free}</b></span>
-      <span>Total <b>${data.total}</b></span>
+    <div class="stbar"><div class="stfill" style="width:${p}%"></div></div>
+    <div class="stlabels">
+      <span>Used <b>${d.used}</b></span>
+      <span>Free <b>${d.free}</b></span>
+      <span>Total <b>${d.total}</b></span>
     </div>
   `);
 }
 
-module(async () => {
-  try { storage_card('storage-nextcloud', 'Nextcloud Data',    'Main server', await api('/api/nextcloud-disk-fields')); }
-  catch(e) { set('storage-nextcloud', `<div class="error-msg">Unavailable</div>`); }
-  try { storage_card('storage-backup',   'Backup Server Disk', 'bracasbck',  await api('/api/backup-disk-fields')); }
-  catch(e) { set('storage-backup',   `<div class="error-msg">Unavailable</div>`); }
+loop(async () => {
+  const [nc, bck] = await Promise.allSettled([
+    api('/api/nextcloud-disk-fields'), api('/api/backup-disk-fields'),
+  ]);
+  renderStorage('st-nc',  'Nextcloud Data',     'Main server', nc.status  === 'fulfilled' ? nc.value  : null);
+  renderStorage('st-bck', 'Backup Server Disk', 'bracasbck',   bck.status === 'fulfilled' ? bck.value : null);
 }, 60000);
 
-// ── Backup ────────────────────────────────────────────────────────────
-async function trigger_backup() {
-  const btn = el('run-backup-btn');
-  if (!btn) return;
-  if (!confirm('Start a manual Nextcloud backup now?')) return;
-  btn.disabled = true;
-  btn.innerHTML = '⏳ Starting…';
+// ── Backup ─────────────────────────────────────────────────────────────
+async function triggerBackup() {
+  const btn = $('run-backup-btn');
+  if (!btn || !confirm('Start a manual Nextcloud backup now?')) return;
+  btn.disabled = true; btn.textContent = 'Starting…';
   try {
-    const r = await fetch('/api/backup/trigger', { method: 'POST' });
+    const r = await fetch('/api/backup/trigger', {method:'POST'});
     const d = await r.json();
-    if (!d.ok) {
-      alert('Could not start backup: ' + (d.error || 'unknown error'));
-      btn.disabled = false;
-      btn.innerHTML = '▶ Run Backup Now';
-    }
-    // success: next poll will pick up live.json and re-render automatically
-  } catch(e) {
-    alert('Error: ' + e.message);
-    btn.disabled = false;
-    btn.innerHTML = '▶ Run Backup Now';
-  }
+    if (!d.ok) { alert('Error: ' + (d.error||'unknown')); btn.disabled=false; btn.textContent='Run Backup'; }
+  } catch(e) { alert(e.message); btn.disabled=false; btn.textContent='Run Backup'; }
 }
 
-function render_live(live) {
-  const card = el('backup-status');
-  card.className = 'card accent-running';
-
+function renderLive(live) {
+  const card = $('backup'); card.className = 'card bl-running';
   const elapsed = Math.floor(Date.now()/1000 - live.startedAtEpoch);
   const pct = live.transferPercent ? parseInt(live.transferPercent) : null;
-  const has_pct = pct !== null && pct > 0;
-
-  const noisy = (live.noisyAppdataPreview > 0 || live.noisyAppdataOther > 0)
-    ? `<div class="live-metrics" style="margin-top:2px">
-        ${live.noisyAppdataPreview > 0 ? `<div class="bm"><div class="bm-label">Preview files</div><div class="bm-value" style="font-size:16px">${live.noisyAppdataPreview.toLocaleString()}</div></div>` : ''}
-        ${live.noisyAppdataOther   > 0 ? `<div class="bm"><div class="bm-label">Other appdata</div><div class="bm-value" style="font-size:16px">${live.noisyAppdataOther.toLocaleString()}</div></div>` : ''}
-      </div>` : '';
-
+  const hasPct = pct > 0;
   card.innerHTML = `
-    <div class="card-header">
-      <div>
-        <div class="card-title">Nextcloud Backup</div>
-        <div class="card-sub">Started ${live.startedAt}</div>
-      </div>
-      <span class="card-badge badge-running">● Running</span>
+    <div class="ch">
+      <div><div class="ct">Nextcloud Backup</div><div class="cs">Started ${live.startedAt}</div></div>
+      <span class="badge badge-run">Running</span>
     </div>
     <div class="live-metrics">
-      <div class="bm">
-        <div class="bm-label">Step</div>
-        <div style="margin-top:4px"><span class="step-pill">${live.step || '…'}</span></div>
-      </div>
-      <div class="bm">
-        <div class="bm-label">Elapsed</div>
-        <div class="bm-value">${fmt_dur(elapsed)}</div>
-      </div>
-      ${live.transferSpeed ? `<div class="bm"><div class="bm-label">Speed</div><div class="bm-value" style="font-size:15px">${live.transferSpeed}</div></div>` : ''}
-      ${live.transferEta   ? `<div class="bm"><div class="bm-label">ETA</div><div class="bm-value" style="font-size:15px">${live.transferEta}</div></div>` : ''}
+      <div class="bm"><div class="bm-l">Step</div><div style="margin-top:4px"><span class="step-pill">${live.step||'…'}</span></div></div>
+      <div class="bm"><div class="bm-l">Elapsed</div><div class="bm-v">${fmtDur(elapsed)}</div></div>
+      ${live.transferSpeed ? `<div class="bm"><div class="bm-l">Speed</div><div class="bm-v" style="font-size:15px">${live.transferSpeed}</div></div>` : ''}
+      ${live.transferEta   ? `<div class="bm"><div class="bm-l">ETA</div><div class="bm-v" style="font-size:15px">${live.transferEta}</div></div>` : ''}
     </div>
-    <div class="progress-wrap">
-      <div class="progress-info">
-        <span>${has_pct ? live.transferPercent : 'Transferring…'}</span>
-      </div>
-      <div class="progress-bar">
-        <div class="progress-fill ${has_pct ? '' : 'indeterminate'}" style="${has_pct ? 'width:'+pct+'%' : ''}"></div>
-      </div>
-    </div>
-    ${live.currentFile ? `<div class="current-file" title="${live.currentFile}">📄 ${live.currentFile}</div>` : ''}
-    ${noisy}
-    <div class="backup-actions">
-      <a href="${BACKUP_DASH_URL}" target="_blank" class="btn btn-secondary">Open Full Dashboard ↗</a>
-    </div>
+    <div class="pinfo"><span>${hasPct ? live.transferPercent : 'Transferring…'}</span></div>
+    <div class="pbar"><div class="pfill ${hasPct?'':'ind'}" style="${hasPct?'width:'+pct+'%':''}"></div></div>
+    ${live.currentFile ? `<div class="curfile" style="margin-top:8px">${live.currentFile}</div>` : ''}
+    <div class="btn-row"><a class="btn" href="${BACKUP_URL}" target="_blank">Open Dashboard</a></div>
   `;
 }
 
-function render_last(last) {
-  const card = el('backup-status');
+function renderLast(last) {
+  const card = $('backup');
   const ok = last.result === 'success';
-  card.className = 'card ' + (ok ? 'accent-success' : 'accent-danger');
-
-  const db = last.dbDest || last.dbFile || '—';
-  const dbname = db.split('/').pop();
-
+  card.className = 'card ' + (ok ? 'bl-green' : 'bl-red');
+  const db = (last.dbDest||last.dbFile||'—').split('/').pop();
   card.innerHTML = `
-    <div class="card-header">
-      <div>
-        <div class="card-title">Nextcloud Backup</div>
-        <div class="card-sub">Daily at 10:50am — ${last.finishedAtEpoch ? fmt_ago(last.finishedAtEpoch) : '—'}</div>
-      </div>
-      <span class="card-badge badge-${ok ? 'success' : 'failed'}">${ok ? '✓ Success' : '✗ Failed'}</span>
+    <div class="ch">
+      <div><div class="ct">Nextcloud Backup</div>
+           <div class="cs">Daily at 10:50am · ${last.finishedAtEpoch ? fmtAgo(last.finishedAtEpoch) : '—'}</div></div>
+      <span class="badge ${ok?'badge-ok':'badge-err'}">${ok ? 'Success' : 'Failed'}</span>
     </div>
-    ${last.errorLine ? `<div class="error-msg" style="margin-bottom:12px">${last.errorLine}</div>` : ''}
-    <div class="backup-metrics">
-      <div class="bm">
-        <div class="bm-label">Result</div>
-        <div class="bm-value" style="font-size:14px;color:var(--${ok?'success':'danger'})">${last.result || '—'}</div>
-      </div>
-      <div class="bm">
-        <div class="bm-label">Finished</div>
-        <div class="bm-value" style="font-size:13px">${(last.finishedAt||'—').split(' ')[1]||'—'}</div>
-        <div class="bm-sub">${last.finishedAt ? last.finishedAt.split(' ')[0] : ''}</div>
-      </div>
-      <div class="bm">
-        <div class="bm-label">Duration</div>
-        <div class="bm-value">${fmt_dur(last.durationSeconds)}</div>
-      </div>
-      <div class="bm">
-        <div class="bm-label">DB size</div>
-        <div class="bm-value">${last.dbSize || last.dbFileSize || '—'}</div>
-        <div class="bm-sub" style="font-size:9px;word-break:break-all">${dbname}</div>
-      </div>
+    ${last.errorLine ? `<div class="err" style="margin-bottom:12px">${last.errorLine}</div>` : ''}
+    <div class="bm-grid">
+      <div class="bm"><div class="bm-l">Result</div>
+        <div class="bm-v" style="font-size:14px;color:var(--${ok?'success':'danger'})">${last.result||'—'}</div></div>
+      <div class="bm"><div class="bm-l">Finished</div>
+        <div class="bm-v" style="font-size:14px">${(last.finishedAt||'—').split(' ')[1]||'—'}</div>
+        <div class="bm-s">${(last.finishedAt||'').split(' ')[0]||''}</div></div>
+      <div class="bm"><div class="bm-l">Duration</div><div class="bm-v">${fmtDur(last.durationSeconds)}</div></div>
+      <div class="bm"><div class="bm-l">DB size</div>
+        <div class="bm-v">${last.dbSize||last.dbFileSize||'—'}</div>
+        <div class="bm-s" style="font-size:9px;word-break:break-all">${db}</div></div>
     </div>
-    <div class="backup-actions">
-      <button id="run-backup-btn" class="btn btn-primary" onclick="trigger_backup()">▶ Run Backup Now</button>
-      <a href="${BACKUP_DASH_URL}" target="_blank" class="btn btn-secondary">Open Dashboard ↗</a>
+    <div class="btn-row">
+      <button id="run-backup-btn" class="btn btn-p" onclick="triggerBackup()">Run Backup</button>
+      <a class="btn" href="${BACKUP_URL}" target="_blank">Open Dashboard</a>
     </div>
   `;
 }
 
-module(async () => {
+loop(async () => {
   try {
-    // Always check live first — it only exists while a backup is running
     const live = await api('/api/backup/live');
-    if (live && live.inProgress) {
-      render_live(live);
-      return;
-    }
-  } catch(_) {}
-
-  try {
-    const last = await api('/api/backup/status');
-    render_last(last);
-  } catch(e) {
-    el('backup-status').className = 'card';
-    set('backup-status', `
-      <div class="card-header"><div class="card-title">Nextcloud Backup</div></div>
-      <div class="error-msg">Backup server unreachable</div>
-      <div class="backup-actions">
-        <a href="${BACKUP_DASH_URL}" target="_blank" class="btn btn-secondary">Open Dashboard ↗</a>
-      </div>
-    `);
+    if (live?.inProgress) { renderLive(live); return; }
+  } catch {}
+  try { renderLast(await api('/api/backup/status')); }
+  catch {
+    $('backup').className = 'card';
+    set('backup', `<div class="ch"><div class="ct">Nextcloud Backup</div></div>
+      <div class="err">Backup server unreachable</div>
+      <div class="btn-row"><a class="btn" href="${BACKUP_URL}" target="_blank">Open Dashboard</a></div>`);
   }
 }, 4000);
 
-// ── Network (Tailscale) ───────────────────────────────────────────────
-module(async () => {
+// ── Digital Twin stats ─────────────────────────────────────────────────
+loop(async () => {
+  try {
+    const [health, devData] = await Promise.all([
+      fetch(TWIN_URL + '/health', {cache:'no-store'}).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(TWIN_API + '/twin/devices?_=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+
+    const badge = $('twin-badge');
+    const online = health?.ha_connected;
+    if (badge) {
+      badge.textContent = online ? 'HA connected' : health ? 'HA offline' : 'Twin offline';
+      badge.className   = 'badge ' + (online ? 'badge-on' : 'badge-off');
+    }
+
+    const devices = devData?.devices || [];
+    const lights    = devices.filter(d => d.domain === 'light');
+    const lightsOn  = lights.filter(d => d.live?.state === 'on').length;
+    const motion    = devices.filter(d => d.domain === 'binary_sensor' && d.live?.device_class === 'motion' && d.live?.state === 'on').length;
+    const doorsOpen = devices.filter(d => d.domain === 'binary_sensor' && d.live?.device_class === 'door'   && d.live?.state === 'on').length;
+
+    set('tn-total',  devices.length || '—');
+    set('tn-lights', lights.length ? lightsOn + ' / ' + lights.length : '—');
+    set('tn-motion', motion   > 0 ? motion   + ' active' : 'None');
+    set('tn-doors',  doorsOpen > 0 ? doorsOpen + ' open' : 'Closed');
+  } catch {}
+}, 8000);
+
+// ── Tailscale peers ────────────────────────────────────────────────────
+loop(async () => {
   try {
     const { peers } = await api('/api/tailscale/peers');
-    const html = peers.map(p => `
+    set('peers', peers.map(p => `
       <div class="peer">
-        <div class="peer-dot ${p.online ? 'on' : 'off'}"></div>
+        <div class="pdot ${p.online ? 'on' : 'off'}"></div>
         <div style="min-width:0">
-          <div class="peer-name">${p.name}</div>
-          <div class="peer-ip">${p.ip}</div>
-          ${p.last_seen ? `<div class="peer-age">${p.last_seen}</div>` : ''}
+          <div class="pname">${p.name}</div>
+          <div class="pip">${p.ip}</div>
+          ${p.last_seen ? `<div class="page">${p.last_seen}</div>` : ''}
         </div>
-      </div>
-    `).join('');
-    set('network-peers', html);
-  } catch(e) {
-    set('network-peers', `<div class="error-msg">Tailscale unavailable</div>`);
-  }
+      </div>`).join(''));
+  } catch { set('peers', `<div class="err">Tailscale unavailable</div>`); }
 }, 30000);
-
-// ── Home Assistant ────────────────────────────────────────────────────
-const PRIORITY = ['light','switch','input_boolean','sensor','binary_sensor','climate','cover'];
-const SKIP = new Set(['input_number','input_text','person','automation','script','scene',
-                      'persistent_notification','tts','zone','sun','weather','update',
-                      'conversation','stt','wake_word','assist_pipeline']);
-
-async function ha_control(entity_id, action, data) {
-  await fetch('/api/ha/control', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({entity_id, action, data: data||{}})
-  });
-  setTimeout(poll_ha, 600);
-}
-
-function render_ha(devices) {
-  const domains = Object.keys(devices)
-    .filter(d => !SKIP.has(d))
-    .sort((a,b) => {
-      const pa = PRIORITY.indexOf(a), pb = PRIORITY.indexOf(b);
-      if (pa !== -1 && pb !== -1) return pa - pb;
-      if (pa !== -1) return -1;
-      if (pb !== -1) return 1;
-      return a.localeCompare(b);
-    });
-
-  let html = '';
-  for (const domain of domains) {
-    const items = devices[domain];
-    html += `<div style="margin-bottom:20px">
-      <div class="section-title" style="margin-bottom:10px">${domain_icon(domain)} ${domain}
-        <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">${items.length} entities</span>
-      </div>
-      <div class="grid grid-auto">`;
-
-    for (const d of items) {
-      const on = d.state === 'on';
-      const is_light = domain === 'light';
-      const is_sensor = domain === 'sensor' || domain === 'binary_sensor';
-
-      if (is_sensor) {
-        html += `<div class="device-card">
-          <div class="device-name">${d.name}</div>
-          <div style="font-size:20px;font-weight:600;margin-top:6px">${d.state}${d.unit ? `<span style="font-size:12px;color:var(--muted);margin-left:2px">${d.unit}</span>` : ''}</div>
-        </div>`;
-      } else {
-        html += `<div class="device-card ${on ? 'is-on' : ''}">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-            <div class="device-name">${d.name}</div>
-            <span class="card-badge badge-${on ? 'on' : 'off'}">${d.state}</span>
-          </div>
-          <button class="toggle-btn" onclick="ha_control('${d.entity_id}','${on ? 'turn_off' : 'turn_on'}')">
-            ${on ? 'Turn Off' : 'Turn On'}
-          </button>
-          ${is_light && on && d.brightness_pct != null ? `
-          <div class="brightness-wrap">
-            <div class="brightness-label">
-              <span>Brightness</span>
-              <span id="bv-${d.entity_id.replace('.','_')}">${d.brightness_pct}%</span>
-            </div>
-            <input type="range" min="1" max="100" value="${d.brightness_pct}"
-              oninput="document.getElementById('bv-${d.entity_id.replace('.','_')}').textContent=this.value+'%'"
-              onchange="ha_control('${d.entity_id}','turn_on',{brightness_pct:+this.value})">
-          </div>` : ''}
-        </div>`;
-      }
-    }
-    html += `</div></div>`;
-  }
-
-  el('ha-section').innerHTML = html || '<div class="error-msg">No devices found</div>';
-}
-
-function domain_icon(d) {
-  const map = {light:'💡',switch:'🔌',sensor:'📡',binary_sensor:'🔔',
-               input_boolean:'🔘',climate:'🌡️',cover:'🪟',media_player:'🎵',
-               camera:'📷',lock:'🔒',fan:'💨',vacuum:'🤖'};
-  return map[d] || '⚙️';
-}
-
-async function poll_ha() {
-  try {
-    const data = await api('/api/ha/devices');
-    render_ha(data);
-  } catch(e) {
-    set('ha-section', `<div class="error-msg">Home Assistant unreachable</div>`);
-  }
-}
-
-module(poll_ha, 8000);
 </script>
 </body>
 </html>

@@ -47,3 +47,15 @@ services:
     env_file:
       - ./api/.env
     restart: unless-stopped
+
+  digital-twin-frontend:
+    image: nginx:alpine
+    container_name: digital-twin-frontend
+    ports:
+      - "8090:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - digital-twin-api
+    restart: unless-stopped

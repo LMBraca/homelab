@@ -1,0 +1,153 @@
+/* ── Picker modal ────────────────────────────────────────────────────────── */
+.picker-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.picker-overlay.open { display: flex; }
+
+.picker-modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  width: 380px;
+  max-width: 95vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+}
+
+.pk-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.pk-icon { font-size: 18px; }
+.pk-titles { flex: 1; min-width: 0; }
+.pk-device-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pk-room-line { display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+.pk-room-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.pk-room-name { font-size: 11px; color: var(--muted); }
+.pk-close {
+  background: none; border: none; color: var(--muted);
+  font-size: 14px; padding: 4px 6px; border-radius: 4px; cursor: pointer;
+}
+.pk-close:hover { background: var(--surface2); color: var(--text); }
+
+.pk-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+.pk-canvas-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+
+.pk-canvas {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.pk-height-section { display: flex; flex-direction: column; gap: 5px; }
+.pk-height-header { display: flex; justify-content: space-between; align-items: baseline; }
+.pk-height-label-text { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.pk-height-value { font-size: 13px; font-weight: 600; color: var(--blue2); font-variant-numeric: tabular-nums; }
+.pk-slider-row { display: flex; align-items: center; gap: 8px; }
+.pk-slider-edge { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+.pk-height-slider { flex: 1; accent-color: var(--blue2); cursor: pointer; }
+.pk-height-desc { font-size: 11px; color: var(--muted2); text-align: center; }
+
+.pk-coords {
+  font-size: 12px;
+  color: var(--muted2);
+  font-family: monospace;
+  text-align: center;
+  background: var(--surface2);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.pk-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.pk-cancel-btn {
+  padding: 7px 16px;
+  border-radius: 7px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted2);
+  font-size: 12px; cursor: pointer;
+  transition: all 0.12s;
+}
+.pk-cancel-btn:hover { background: var(--surface2); color: var(--text); }
+
+.pk-save-btn {
+  padding: 7px 18px;
+  border-radius: 7px;
+  border: 1px solid rgba(99,102,241,0.5);
+  background: rgba(99,102,241,0.2);
+  color: var(--blue2);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: all 0.12s;
+}
+.pk-save-btn:hover { background: rgba(99,102,241,0.35); border-color: var(--blue2); }
+
+/* ── Mobile ────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* Slide up from bottom as a sheet */
+  .picker-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .picker-modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 90vh;
+  }
+  /* Drag handle */
+  .pk-header::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    border-radius: 2px;
+    background: var(--surface3);
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .pk-header { position: relative; padding-top: 20px; }
+
+  /* Larger canvas area */
+  .pk-canvas { min-height: 200px; }
+
+  /* Inputs font-size 16px prevents iOS auto-zoom */
+  .pk-input { font-size: 16px; }
+
+  /* Bigger footer buttons */
+  .pk-cancel-btn, .pk-save-btn {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 48px;
+  }
+  .pk-footer { gap: 10px; padding: 14px 16px; }
+
+  /* Height slider: taller thumb */
+  .pk-height-slider { height: 24px; }
+}

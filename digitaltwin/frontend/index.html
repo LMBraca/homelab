@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0c14">
+  <title>bracas digital twin</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/picker.css">
+  <link rel="stylesheet" href="css/register.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three":         "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+
+<!-- ── Loading screen ─────────────────────────────────────────────────────── -->
+<div id="loading-screen">
+  <div class="ls-inner">
+    <div class="ls-logo"><div class="ls-logo-dot"></div>bracas digital twin</div>
+    <div class="ls-spinner"></div>
+    <div class="ls-status" id="ls-status">Initializing…</div>
+  </div>
+</div>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<header id="header">
+
+  <button id="hamburger-btn" class="hamburger-btn" aria-label="Toggle sidebar" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div>
+      <div class="logo-text">bracas digital twin</div>
+      <div class="logo-sub">3D home viewer</div>
+    </div>
+  </div>
+
+  <div id="floor-switcher"></div>
+
+  <!-- Time of day control -->
+  <div class="time-control">
+    <span class="sun-icon" id="sun-icon">&#9728;&#65039;</span>
+    <span id="sun-clock" class="sun-clock">--:--</span>
+    <input id="time-slider" class="time-slider" type="range"
+           min="0" max="24" step="0.25" value="12" disabled>
+    <button id="time-mode-btn" class="time-mode-btn active">&#128336; Real Time</button>
+  </div>
+
+  <div class="conn-status" title="Home Assistant connection">
+    <span class="conn-dot conn-unknown" id="conn-dot"></span>
+    <span class="conn-label" id="conn-label">HA</span>
+  </div>
+
+  <div class="header-hint">
+    <kbd>Ctrl+K</kbd> search &nbsp;&middot;&nbsp; <kbd>F</kbd> frame &nbsp;&middot;&nbsp; <kbd>Esc</kbd> deselect
+  </div>
+
+  <div id="status-msg">Loading&hellip;</div>
+</header>
+
+<!-- ── App ────────────────────────────────────────────────────────────────── -->
+<div id="app">
+
+  <aside id="sidebar">
+    <div class="sidebar-title">Rooms</div>
+    <div class="sidebar-floor-row" id="sidebar-floor-row" style="display:none"></div>
+    <nav id="room-list">
+      <div style="padding:16px;font-size:12px;color:var(--muted)">Connecting&hellip;</div>
+    </nav>
+    <!-- sidebar footer inserted by ui.js -->
+  </aside>
+
+  <div id="viewport">
+    <canvas id="canvas"></canvas>
+    <div id="labels"></div>
+
+    <div id="info-panel">
+      <div class="info-header">
+        <div id="info-room-dot"></div>
+        <div>
+          <div id="info-room-name"></div>
+          <div id="info-room-floor"></div>
+        </div>
+        <button class="info-close" id="info-close-btn">&#x2715;</button>
+      </div>
+      <div class="info-meta">
+        <div class="info-meta-item">Devices<span id="info-device-count">&mdash;</span></div>
+        <div class="info-meta-item">Room ID<span id="info-room-id">&mdash;</span></div>
+      </div>
+      <div id="info-device-list"></div>
+    </div>
+
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+  </div>
+
+</div>
+
+<!-- ── Mobile bottom bar ──────────────────────────────────────────────────── -->
+<div id="mobile-bottom-bar">
+  <button class="mbb-btn" id="mbb-rooms-btn" aria-label="Rooms">
+    <span class="mbb-icon">&#127968;</span>
+    <span class="mbb-label">Rooms</span>
+  </button>
+  <div class="mbb-floors" id="mbb-floors"></div>
+  <button class="mbb-btn" id="mbb-time-btn" aria-label="Time of day">
+    <span class="mbb-icon" id="mbb-sun-icon">&#9728;&#65039;</span>
+    <span class="mbb-label" id="mbb-clock">--:--</span>
+  </button>
+  <button class="mbb-btn" id="mbb-search-btn" aria-label="Search">
+    <span class="mbb-icon">&#8981;</span>
+    <span class="mbb-label">Search</span>
+  </button>
+</div>
+
+<script type="module" src="js/main.js"></script>
+
+<script>
+  document.getElementById('sidebar-backdrop')?.addEventListener('click', () => {
+    document.getElementById('sidebar')?.classList.remove('mobile-open');
+    document.getElementById('hamburger-btn')?.setAttribute('aria-expanded', 'false');
+  });
+</script>
+
+</body>
+</html>
