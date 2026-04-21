@@ -1,0 +1,16 @@
+[Unit]
+Description=Claude Build Watcher — picks up dashboard build jobs and runs Claude Code
+After=network.target
+
+[Service]
+Type=simple
+User=luis
+ExecStart=/opt/homelab/scripts/claude-ideas/build-watcher.sh
+Restart=always
+RestartSec=10
+StandardOutput=append:/opt/claude-ideas/build-watcher.log
+StandardError=null
+Environment=HOME=/home/luis
+
+[Install]
+WantedBy=multi-user.target

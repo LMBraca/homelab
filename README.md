@@ -9,94 +9,89 @@ Personal homelab running on Ubuntu 22.04 at `100.87.156.88`, accessed via Tailsc
 | Home Assistant | `digitaltwin/` | 8123 | IoT hub + digital twin entities |
 | Mosquitto MQTT | `digitaltwin/` | 1883 | IoT message broker |
 | Zigbee2MQTT | `digitaltwin/` | 8080 | Zigbee bridge (disabled — dongle pending) |
-| Digital Twin API | `digitaltwin/api/` | 8000 | REST API for 3D house model frontend |
+| Digital Twin API | `digitaltwin/api/` | 8000 | REST API for 3D house model |
+| Digital Twin Frontend | `digitaltwin/frontend/` | 8090 | Three.js 3D viewer (nginx static + API proxy) |
+| Dashboard API | `homelab-dashboard/api/` | 8787 | Flask dashboard — backup, glances, tailscale, HA |
 | Homepage | `homelab-dashboard/` | 3000 | Internal service dashboard |
-| Glances | `homelab-dashboard/` | 61208 | Server monitoring |
-| Dashboard API | `homelab-dashboard/api/` | 8787 | Custom Flask API — backup status, Glances proxy, Tailscale peers, HA control |
+| Glances | `homelab-dashboard/` | 61208 | Server monitoring agent |
 | Caddy | `caddy/` | 8088 | Reverse proxy (HTTP basic auth) |
 | Nextcloud | snap-managed | 80 | File storage |
 
+---
+
 ## Dashboard API (`homelab-dashboard/api/`)
 
-Flask app served at `:8787`. Runs inside Docker. Exposes:
+Flask app at `:8787`. `dashboard.html` is baked into the image via `COPY` in the
+Dockerfile — changes require `up -d --build dashboard-api`.
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `GET /` | GET | Serves `dashboard.html` — the main homelab dashboard UI |
-| `/api/glances/<server>` | GET | Proxies Glances stats for `main` or `backup` server |
+| `GET /` | GET | Serves `dashboard.html` |
+| `/api/glances/<server>` | GET | Glances stats for `main` or `backup` |
 | `/api/tailscale/peers` | GET | Tailscale peer list with online status |
-| `/api/backup/status` | GET | Last backup result from backup server (`backup-last.json`) |
-| `/api/backup/live` | GET | Live backup progress from backup server (`backup-live.json`) |
-| `/api/backup/running` | GET | Whether a backup is currently running (Flask flag on backup server) |
+| `/api/backup/status` | GET | Last backup result (`backup-last.json`) |
+| `/api/backup/live` | GET | Live backup progress (`backup-live.json`) |
 | `/api/backup/trigger` | POST | Triggers a manual backup on the backup server |
 | `/api/ha/devices` | GET | All Home Assistant entity states |
 | `/api/ha/control` | POST | Toggle/control a HA entity |
 | `/api/nextcloud-disk-fields` | GET | Nextcloud data directory disk usage |
 | `/api/backup-disk-fields` | GET | Backup server root disk usage (via Glances) |
 
-The dashboard polls `/api/backup/live` every 4 seconds while a backup is running, showing
-live step, elapsed time, rsync speed, ETA, progress bar, and current file. Falls back to
-the last backup summary when idle.
+## Digital Twin (`digitaltwin/`)
+
+Three.js 3D home viewer integrated into the main dashboard as a tab.
+
+- **Frontend** at `:8090` — nginx serving static files from `frontend/` (volume-mounted)
+- **API** at `:8000` — Flask with SQLite for device registry and 3D positions
+
+The frontend proxies `/api/` and `/health` to the API container via nginx.
+
+### Secrets
+
+- `digitaltwin/api/.env` — `HA_TOKEN`, `HA_URL`
 
 ## Backup Server (`bracasbck` — `100.90.102.52`)
 
-Managed separately in the `homelab-backup` repo. The main dashboard talks to it over Tailscale.
+Managed separately in the `homelab-backup` repo.
 
 | Endpoint | Port | Description |
 |---|---|---|
-| `/run-backup` (POST) | 8081 | Triggers `backup-nextcloud.sh` |
-| `/backup-status` (GET) | 8081 | `{"running": true/false}` from Flask memory |
-| `/backup-live.json` (GET) | 8081 | Written by `backup-nextcloud.sh` while running |
-| `/backup-last.json` (GET) | 8081 | Written by `backup-nextcloud.sh` on completion |
+| `/run-backup` | 8081 | POST — triggers `backup-nextcloud.sh` |
+| `/backup-status` | 8081 | GET — `{"running": true/false}` |
+| `/backup-live.json` | 8081 | GET — written by script while running |
+| `/backup-last.json` | 8081 | GET — written by script on completion |
 
-The backup server runs `homelab-dashboard/api/server.py` (Flask) via the
-`backup-live-http.service` systemd unit at `/etc/systemd/system/backup-live-http.service`.
-Files are deployed to `/home/luis/backup-dashboard/` on the backup server.
+Flask served via `backup-live-http.service` systemd unit.
+Files live at `/home/luis/backup-dashboard/` on the backup server.
 
 ## Secrets (NOT in this repo)
 
-- `digitaltwin/api/.env` — `HA_TOKEN`
+- `digitaltwin/api/.env` — `HA_TOKEN`, `HA_URL`
 - `homelab-dashboard/api/dashboard-api.env` — `HA_TOKEN`, `NEXTCLOUD_DATA_DIR`
 
-Create these manually on a fresh server. See each service for required vars.
+Create these manually on a fresh server.
 
 ## Restore on a new server
 
 ```bash
 git clone git@github.com:luisbracamontes/homelab.git /opt/homelab
-cd /opt/homelab/digitaltwin && docker compose up -d
-cd /opt/homelab/homelab-dashboard && docker compose up -d
-sudo cp caddy/Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy
-```
 
-## Sync workflow
+# Secrets
+cp ~/secrets/digitaltwin.env      /opt/homelab/digitaltwin/api/.env
+cp ~/secrets/dashboard-api.env    /opt/homelab/homelab-dashboard/api/dashboard-api.env
 
-Changes are made locally (Mac) and pushed to the server via rsync:
+# Start services
+cd /opt/homelab/digitaltwin        && docker compose up -d
+cd /opt/homelab/homelab-dashboard  && docker compose up -d --build
 
-```bash
-# Push main server files
-cd ~/Documents/personal/homelab-server
-./push-to-server.sh
-
-# Push backup server files
-cd ~/Documents/personal/homelab-backup
-./push-to-backup-server.sh
-
-# Restart dashboard after API changes
-ssh luis@100.87.156.88 "cd /opt/homelab/homelab-dashboard && docker compose restart"
-
-# Restart backup Flask server after changes
-ssh luis@100.90.102.52 "sudo systemctl restart backup-live-http.service"
+# Caddy
+sudo cp /opt/homelab/caddy/Caddyfile /etc/caddy/Caddyfile
+sudo systemctl reload caddy
 ```
 
 ## Daily automation
 
-Tailscale device list regenerates every 30 min via cron:
 ```
-*/30 * * * * /opt/homelab/homelab-dashboard/build_services.sh
-```
-
-Nextcloud backup runs daily at 10:50am on the backup server:
-```
-50 10 * * * /opt/homelab-backup/backup-nextcloud.sh
+*/30 * * * *  /opt/homelab/homelab-dashboard/build_services.sh   # Tailscale device list
+50 10 * * *   /opt/homelab-backup/backup-nextcloud.sh             # Nextcloud backup
 ```

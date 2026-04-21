@@ -38,3 +38,19 @@ services:
       - /var/run/tailscale/tailscaled.sock:/var/run/tailscale/tailscaled.sock
       - /usr/bin/tailscale:/usr/bin/tailscale:ro
       - /usr/sbin/tailscale:/usr/sbin/tailscale:ro
+      # Claude Code — node binary + the actual npm global modules + symlink
+      - /usr/bin/node:/usr/bin/node:ro
+      - /usr/lib/node_modules:/usr/lib/node_modules:ro
+      - /usr/bin/claude:/usr/bin/claude:ro
+      # Claude account config dirs (for /usage and auth)
+      - /home/luis/.claude-account-1:/home/luis/.claude-account-1:ro
+      - /home/luis/.claude-account-2:/home/luis/.claude-account-2:ro
+      - /home/luis/.claude-account-3:/home/luis/.claude-account-3:ro
+      # Ideas output (writable so the API can delete entries and write build jobs)
+      - /opt/claude-ideas:/opt/claude-ideas
+      # Build runner script (host-side, read-only reference)
+      - /home/luis/scripts/claude-ideas/run-build.sh:/home/luis/scripts/claude-ideas/run-build.sh:ro
+      # Fetch limits script (host-side, read-only — called by refresh-limits endpoint)
+      - /opt/homelab/scripts/claude-ideas/fetch-claude-limits.sh:/opt/homelab/scripts/claude-ideas/fetch-claude-limits.sh:ro
+      # Built projects dir (for listing/deleting)
+      - /home/luis/claude-builds:/home/luis/claude-builds
