@@ -1,0 +1,14 @@
+[Unit]
+Description=Watch for dashboard "Refresh now" trigger and run fetch-claude-limits.sh
+# Invoked via /opt/claude-ideas/.refresh-requested, which the homelab-dashboard
+# container creates when the user clicks "Refresh now". This systemd path unit
+# is what lets the dashboard request an on-demand refresh without needing write
+# access to ~/.claude-account-N/.credentials.json (which it doesn't have — the
+# docker-compose mount is :ro per the single-writer rule).
+
+[Path]
+PathExists=/opt/claude-ideas/.refresh-requested
+Unit=claude-limits-refresh.service
+
+[Install]
+WantedBy=multi-user.target

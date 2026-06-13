@@ -8,9 +8,32 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0a0c14">
   <title>bracas digital twin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/picker.css">
   <link rel="stylesheet" href="css/register.css">
+  <script>
+    /* Theme bootstrap — applied as early as possible to avoid a flash.
+       Source of truth is the parent dashboard: it passes ?theme=dark|light
+       on the iframe src and sends postMessage on changes. Standalone visits
+       fall back to localStorage, then dark. */
+    (function(){
+      var t = new URLSearchParams(location.search).get('theme');
+      if(t !== 'dark' && t !== 'light'){
+        try{ t = localStorage.getItem('twin-theme') || 'dark'; }catch(e){ t = 'dark'; }
+      }
+      document.documentElement.setAttribute('data-theme', t);
+      window.addEventListener('message', function(e){
+        var d = e.data;
+        if(d && d.type === 'theme' && (d.theme === 'dark' || d.theme === 'light')){
+          document.documentElement.setAttribute('data-theme', d.theme);
+          try{ localStorage.setItem('twin-theme', d.theme); }catch(_){}
+        }
+      });
+    })();
+  </script>
   <script type="importmap">
   {
     "imports": {

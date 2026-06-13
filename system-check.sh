@@ -16,18 +16,46 @@ warn() { echo -e "  ${YELLOW}⚠${RESET}  $1"; }
 info() { echo -e "  ${BLUE}→${RESET}  $1"; }
 section() { echo -e "\n${BOLD}━━━  $1  ━━━${RESET}"; }
 
+# ── Health thresholds ──────────────────────────────────────────────────
+# Pulled from /opt/claude-ideas/settings.json (the same store the dashboard
+# /settings page writes to). Each call hard-codes a sensible default so the
+# script still works if settings.json is missing or malformed.
+SETTINGS_FILE="${SETTINGS_FILE:-/opt/claude-ideas/settings.json}"
+_read_setting() {
+    python3 - "$SETTINGS_FILE" "$1" "$2" "$3" <<'PYEOF' 2>/dev/null || echo "$3"
+import json, sys
+path, section, key, default = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+try:
+    with open(path) as f:
+        d = json.load(f)
+    v = d.get(section, {}).get(key)
+    print(v if v not in (None, "") else default)
+except Exception:
+    print(default)
+PYEOF
+}
+CPU_RATIO=$(_read_setting health cpu_overload_ratio 1.0)
+MEM_CRIT=$(_read_setting health memory_critical_pct 90)
+MEM_WARN=$(_read_setting health memory_warning_pct 75)
+DISK_CRIT=$(_read_setting health disk_critical_pct 90)
+DISK_WARN=$(_read_setting health disk_warning_pct 75)
+SWAP_WARN=$(_read_setting health swap_warning_pct 50)
+UPDATES_WARN=$(_read_setting health updates_warn_count 20)
+DOCKER_RESTART_WARN=$(_read_setting health docker_restart_warn_count 5)
+
 # ── 1. System ──────────────────────────────────────────────────────────
 section "System"
 
 UPTIME=$(uptime -p)
 ok "Uptime: $UPTIME"
 
-# CPU load
+# CPU load — fail when loadavg > cores * CPU_RATIO
 LOAD=$(cut -d' ' -f1 /proc/loadavg)
 CORES=$(nproc)
 LOAD_INT=$(echo "$LOAD * 100 / $CORES" | bc 2>/dev/null || echo "0")
-if (( $(echo "$LOAD > $CORES" | bc -l) )); then
-  fail "CPU load high: $LOAD (cores: $CORES)"
+CPU_LIMIT=$(echo "$CORES * $CPU_RATIO" | bc -l)
+if (( $(echo "$LOAD > $CPU_LIMIT" | bc -l) )); then
+  fail "CPU load high: $LOAD (cores: $CORES, limit: $CPU_LIMIT)"
 else
   ok "CPU load: $LOAD (cores: $CORES)"
 fi
@@ -36,9 +64,9 @@ fi
 MEM_TOTAL=$(free -m | awk '/^Mem:/{print $2}')
 MEM_USED=$(free -m | awk '/^Mem:/{print $3}')
 MEM_PCT=$(( MEM_USED * 100 / MEM_TOTAL ))
-if [ "$MEM_PCT" -gt 90 ]; then
+if [ "$MEM_PCT" -gt "$MEM_CRIT" ]; then
   fail "Memory: ${MEM_USED}MB / ${MEM_TOTAL}MB (${MEM_PCT}%)"
-elif [ "$MEM_PCT" -gt 75 ]; then
+elif [ "$MEM_PCT" -gt "$MEM_WARN" ]; then
   warn "Memory: ${MEM_USED}MB / ${MEM_TOTAL}MB (${MEM_PCT}%)"
 else
   ok "Memory: ${MEM_USED}MB / ${MEM_TOTAL}MB (${MEM_PCT}%)"
@@ -47,9 +75,9 @@ fi
 # Disk
 DISK_PCT=$(df / | awk 'NR==2{print $5}' | tr -d '%')
 DISK_INFO=$(df -h / | awk 'NR==2{print $3 " used of " $2 " (" $5 ")"}')
-if [ "$DISK_PCT" -gt 90 ]; then
+if [ "$DISK_PCT" -gt "$DISK_CRIT" ]; then
   fail "Disk /: $DISK_INFO"
-elif [ "$DISK_PCT" -gt 75 ]; then
+elif [ "$DISK_PCT" -gt "$DISK_WARN" ]; then
   warn "Disk /: $DISK_INFO"
 else
   ok "Disk /: $DISK_INFO"
@@ -58,7 +86,7 @@ fi
 # Swap
 SWAP_USED=$(free -m | awk '/^Swap:/{print $3}')
 SWAP_TOTAL=$(free -m | awk '/^Swap:/{print $2}')
-if [ "$SWAP_TOTAL" -gt 0 ] && [ "$SWAP_USED" -gt $(( SWAP_TOTAL / 2 )) ]; then
+if [ "$SWAP_TOTAL" -gt 0 ] && [ "$SWAP_USED" -gt $(( SWAP_TOTAL * SWAP_WARN / 100 )) ]; then
   warn "Swap: ${SWAP_USED}MB / ${SWAP_TOTAL}MB used (high)"
 else
   ok "Swap: ${SWAP_USED}MB / ${SWAP_TOTAL}MB used"
@@ -66,7 +94,7 @@ fi
 
 # OS updates
 UPDATES=$(apt list --upgradable 2>/dev/null | grep -c upgradable || echo 0)
-if [ "$UPDATES" -gt 20 ]; then
+if [ "$UPDATES" -gt "$UPDATES_WARN" ]; then
   warn "$UPDATES packages upgradable"
 elif [ "$UPDATES" -gt 0 ]; then
   info "$UPDATES packages upgradable"
@@ -85,7 +113,7 @@ for name in "${EXPECTED[@]}"; do
   if [ -z "$STATUS" ]; then
     fail "$name — not found"
   elif [ "$STATUS" = "running" ]; then
-    if [ "$RESTART" -gt 5 ]; then
+    if [ "$RESTART" -gt "$DOCKER_RESTART_WARN" ]; then
       warn "$name — running (restarted ${RESTART}x — unstable)"
     else
       ok "$name — running"

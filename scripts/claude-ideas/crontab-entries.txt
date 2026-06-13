@@ -1,21 +1,37 @@
 # ============================================================
 # Claude Project Idea Generator - Cron Schedule
 # ============================================================
-# Account 1: Starts at 4:00 AM, then every 4 hours
-# Account 2: Starts at 5:00 AM, then every 4 hours
-# Account 3: Starts at 6:00 AM, then every 4 hours
+# Every 4.5 hours, starting at 4am / 5am / 6am for accounts 1/2/3.
+# The pattern resets at 4am each day — whatever run would fall
+# after the next day's 4am cutoff is skipped.
 #
-# To install: crontab -e  (then paste the lines below)
+# Per-day runs per account:
+#   Account 1: 04:00, 08:30, 13:00, 17:30, 22:00   (5 runs)
+#   Account 2: 05:00, 09:30, 14:00, 18:30, 23:00   (5 runs)
+#   Account 3: 06:00, 10:30, 15:00, 19:30, 00:00   (5 runs)
+#
+# To install: crontab -e  (then paste the lines below,
+# replacing any existing claude-idea-generator / fetch-claude-limits /
+# keepalive-claude-tokens / alert-claude-limits lines)
 # ============================================================
 
-# Account 1: 4am, 8am, 12pm, 4pm, 8pm, 12am
-0 0,4,8,12,16,20 * * * /opt/homelab/scripts/claude-ideas/claude-idea-generator.sh 1
+# Account 1: 04:00, 08:30, 13:00, 17:30, 22:00
+0  4,13,22  * * * /opt/homelab/scripts/claude-ideas/claude-idea-generator.sh 1
+30 8,17     * * * /opt/homelab/scripts/claude-ideas/claude-idea-generator.sh 1
 
-# Account 2: 5am, 9am, 1pm, 5pm, 9pm, 1am
-0 1,5,9,13,17,21 * * * /opt/homelab/scripts/claude-ideas/claude-idea-generator.sh 2
+# Account 2: 05:00, 09:30, 14:00, 18:30, 23:00
+0  5,14,23  * * * /opt/homelab/scripts/claude-ideas/claude-idea-generator.sh 2
+30 9,18     * * * /opt/homelab/scripts/claude-ideas/claude-idea-generator.sh 2
 
-# Account 3: 6am, 10am, 2pm, 6pm, 10pm, 2am
-0 2,6,10,14,18,22 * * * /opt/homelab/scripts/claude-ideas/claude-idea-generator.sh 3
+# Account 3: 06:00, 10:30, 15:00, 19:30, 00:00
+0  0,6,15   * * * /opt/homelab/scripts/claude-ideas/claude-idea-generator.sh 3
+30 10,19    * * * /opt/homelab/scripts/claude-ideas/claude-idea-generator.sh 3
 
-# Fetch live session + weekly limits from api.claude.ai every 5 minutes
-*/5 * * * * /opt/homelab/scripts/claude-ideas/fetch-claude-limits.sh
+# Fetch live session + weekly limits from api.claude.ai every hour
+0 * * * * /opt/homelab/scripts/claude-ideas/fetch-claude-limits.sh
+
+# Daily OAuth refresh-token keep-alive (3:17 AM — offset from the hourly fetcher)
+17 3 * * * /opt/homelab/scripts/claude-ideas/keepalive-claude-tokens.sh
+
+# Hourly alert check on limits.json (5 minutes after the fetcher writes it)
+5 * * * * /opt/homelab/scripts/claude-ideas/alert-claude-limits.sh

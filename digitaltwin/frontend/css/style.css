@@ -2,33 +2,56 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root {
-  --bg:        #0a0c14;
-  --surface:   #13161f;
-  --surface2:  #1c2030;
-  --surface3:  #242840;
-  --border:    rgba(255,255,255,0.07);
-  --border2:   rgba(255,255,255,0.13);
-  --text:      #dde1f0;
-  --muted:     #5a6080;
-  --muted2:    #7a84a8;
-  --success:   #22c55e;
-  --danger:    #ef4444;
-  --warn:      #f59e0b;
-  --blue:      #6366f1;
-  --blue2:     #818cf8;
-  --cyan:      #06b6d4;
-  --r:         10px;
-  --header-h:  52px;
+/* Tokens map onto the parent dashboard's palette so the twin reads as the
+   same product. Token *names* are kept (--surface, --text, --blue2, etc.)
+   so the rest of this stylesheet doesn't need to change — we just bend
+   the values to match dashboard.html. */
+:root, [data-theme="dark"] {
+  --bg:        #0b0c0a;
+  --surface:   #111311;
+  --surface2:  #171a17;
+  --surface3:  #1f221f;
+  --border:    rgba(220,210,180,0.10);
+  --border2:   rgba(220,210,180,0.22);
+  --text:      #dcd6c4;
+  --muted:     #5a5548;
+  --muted2:    #8a8474;
+  --success:   #82bd6d;
+  --danger:    #cc5e5e;
+  --warn:      #d79a3a;
+  --blue:      #d79a3a;    /* repurposed: accent (was blue) */
+  --blue2:     #d79a3a;
+  --cyan:      #6ea8a6;
+  --r:         0;
+  --header-h:  44px;
   --sidebar-w: 240px;
   --mobile-bar-h: 58px;
+}
+[data-theme="light"] {
+  --bg:        #f4f1e8;
+  --surface:   #ffffff;
+  --surface2:  #ebe6d8;
+  --surface3:  #dfd9c7;
+  --border:    rgba(30,25,10,0.12);
+  --border2:   rgba(30,25,10,0.28);
+  --text:      #1a1814;
+  --muted:     #8a8470;
+  --muted2:    #55503f;
+  --success:   #3a6a2d;
+  --danger:    #923030;
+  --warn:      #9b5f11;
+  --blue:      #9b5f11;
+  --blue2:     #9b5f11;
+  --cyan:      #2a6a68;
 }
 
 html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "JetBrains Mono","SF Mono",Menlo,Consolas,ui-monospace,monospace;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
   overflow: hidden;
   /* Prevent iOS rubber-band scroll that can expose white background */
   overscroll-behavior: none;
@@ -75,7 +98,7 @@ body { position: fixed; width: 100%; }
   transition: all 0.15s;
 }
 .fsw-btn:hover  { background: var(--surface2); color: var(--text); }
-.fsw-btn.active { background: rgba(99,102,241,0.2); color: var(--blue2); border-color: rgba(99,102,241,0.5); }
+.fsw-btn.active { background: rgba(215,154,58,0.2); color: var(--blue2); border-color: rgba(215,154,58,0.5); }
 
 /* ── Time control ────────────────────────────────────────────────────────── */
 .time-control {
@@ -107,7 +130,7 @@ body { position: fixed; width: 100%; }
   flex-shrink: 0;
 }
 .time-mode-btn:hover  { background: var(--surface2); color: var(--text); }
-.time-mode-btn.active { background: rgba(99,102,241,0.2); color: var(--blue2); border-color: rgba(99,102,241,0.5); }
+.time-mode-btn.active { background: rgba(215,154,58,0.2); color: var(--blue2); border-color: rgba(215,154,58,0.5); }
 
 #status-msg { font-size: 11px; color: var(--muted); flex-shrink: 0; }
 
@@ -208,7 +231,7 @@ body { position: fixed; width: 100%; }
   white-space: nowrap;
 }
 .room-label.hover    { border-color: rgba(251,191,36,0.5);  background: rgba(251,191,36,0.12); }
-.room-label.selected { border-color: rgba(99,102,241,0.6);  background: rgba(99,102,241,0.18); }
+.room-label.selected { border-color: rgba(215,154,58,0.6);  background: rgba(215,154,58,0.18); }
 .rl-name  { font-size: 11px; font-weight: 500; color: var(--text); }
 .rl-count { font-size: 10px; color: var(--muted2); background: var(--surface3); border-radius: 8px; padding: 1px 5px; }
 
@@ -334,7 +357,7 @@ body { position: fixed; width: 100%; }
   flex-shrink: 0;
 }
 .di-toggle:hover      { background: rgba(34,197,94,.15);    color: var(--success); border-color: rgba(34,197,94,.3); }
-.di-reposition:hover  { background: rgba(99,102,241,.15);   color: var(--blue2);   border-color: rgba(99,102,241,.3); }
+.di-reposition:hover  { background: rgba(215,154,58,.15);   color: var(--blue2);   border-color: rgba(215,154,58,.3); }
 .di-unregister:hover  { background: rgba(239,68,68,.12);    color: var(--danger);  border-color: rgba(239,68,68,.3); }
 
 /* ── Toast ───────────────────────────────────────────────────────────────── */
@@ -462,7 +485,7 @@ body { position: fixed; width: 100%; }
 .cp-result-state { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 8px; flex-shrink: 0; text-transform: lowercase; }
 .cp-state-on  { background: rgba(34,197,94,.15); color: #22c55e; }
 .cp-state-off { background: rgba(255,255,255,.05); color: var(--muted); }
-mark.cp-match { background: rgba(99,102,241,0.25); color: var(--blue2); border-radius: 2px; }
+mark.cp-match { background: rgba(215,154,58,0.25); color: var(--blue2); border-radius: 2px; }
 .cp-empty { padding: 24px; text-align: center; font-size: 13px; color: var(--muted); }
 
 .cp-footer { display: flex; gap: 16px; padding: 8px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
@@ -511,7 +534,7 @@ mark.cp-match { background: rgba(99,102,241,0.25); color: var(--blue2); border-r
 .env-picker { position: relative; flex-shrink: 0; }
 .env-toggle { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border2); background: var(--surface2); color: var(--muted2); font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
 .env-toggle:hover { background: var(--surface3); color: var(--text); }
-.env-toggle.open  { border-color: rgba(99,102,241,0.5); color: var(--blue2); background: rgba(99,102,241,0.1); }
+.env-toggle.open  { border-color: rgba(215,154,58,0.5); color: var(--blue2); background: rgba(215,154,58,0.1); }
 .env-toggle-icon { font-size: 14px; }
 .env-toggle-name { font-size: 11px; font-weight: 500; }
 .env-caret { font-size: 9px; color: var(--muted); transition: transform 0.2s; }
@@ -525,7 +548,7 @@ mark.cp-match { background: rgba(99,102,241,0.25); color: var(--blue2); border-r
 }
 .env-preset-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; border: none; border-radius: 8px; background: transparent; color: var(--text); font-size: 13px; text-align: left; cursor: pointer; transition: background 0.1s; }
 .env-preset-btn:hover  { background: var(--surface2); }
-.env-preset-btn.active { background: rgba(99,102,241,0.15); color: var(--blue2); }
+.env-preset-btn.active { background: rgba(215,154,58,0.15); color: var(--blue2); }
 .env-preset-icon  { font-size: 16px; flex-shrink: 0; }
 .env-preset-label { flex: 1; }
 .env-preset-check { font-size: 12px; color: var(--blue2); }
@@ -656,3 +679,24 @@ mark.cp-match { background: rgba(99,102,241,0.25); color: var(--blue2); border-r
   /* ── Env picker: hidden on mobile (use mbb) ──────────────────────────── */
   .env-toggle { display: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ── Dashboard-style overrides ─────────────────────────────────────────
+   Flatten rounded corners and re-skin a couple of hard-coded colors so
+   the twin reads as the same product as homelab-dashboard. Kept at the
+   end of the file so it wins the cascade without rewriting every rule.
+   ═══════════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { border-radius: 0 !important; }
+/* Restore circles for dots and the loading spinner */
+.logo-dot, .ri-dot, #info-room-dot, .pk-room-dot, .cp-room-dot,
+.conn-dot, .ls-logo-dot, .ls-spinner { border-radius: 50% !important; }
+
+/* room-label.hover was a hard-coded warm yellow — bring it onto the
+   accent token so dark/light themes both look right */
+.room-label.hover { border-color: var(--blue2); background: rgba(215,154,58,0.12); }
+
+/* Light-theme adjustments for surfaces that were tuned for dark only */
+[data-theme="light"] .room-label   { background: rgba(255,255,255,0.85); border-color: var(--border2); }
+[data-theme="light"] .device-tooltip { background: rgba(255,255,255,0.92); border-color: var(--border2); color: var(--text); }
+[data-theme="light"] .sidebar-backdrop, [data-theme="light"] .cp-overlay,
+[data-theme="light"] .picker-overlay, [data-theme="light"] .reg-overlay { background: rgba(30,25,10,0.35); }

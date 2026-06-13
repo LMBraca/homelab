@@ -1,3 +1,9 @@
+# Timezone policy: every container mounts /etc/localtime + sets TZ to PT.
+# Host must be on America/Los_Angeles
+# (`sudo timedatectl set-timezone America/Los_Angeles`).
+# Without this containers default to UTC and ages compared against host-written
+# naive timestamps (generator.log, project-ideas.jsonl) come out ~7h skewed.
+
 services:
   homepage:
     image: ghcr.io/gethomepage/homepage:v0.9.13
@@ -9,6 +15,7 @@ services:
       - ./homepage:/app/config
       - /etc/localtime:/etc/localtime:ro
     environment:
+      - TZ=America/Los_Angeles
       - HOMEPAGE_LOG_LEVEL=warn
       - HOMEPAGE_ALLOWED_HOSTS=100.87.156.88:8088
 
@@ -19,6 +26,7 @@ services:
     pid: host
     privileged: true
     environment:
+      - TZ=America/Los_Angeles
       - GLANCES_OPT=-w
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -31,9 +39,12 @@ services:
     restart: unless-stopped
     ports:
       - "8787:8787"
+    environment:
+      - TZ=America/Los_Angeles
     env_file:
       - ./api/dashboard-api.env
     volumes:
+      - /etc/localtime:/etc/localtime:ro
       - /var/snap/nextcloud/common/nextcloud/data:/var/snap/nextcloud/common/nextcloud/data:ro
       - /var/run/tailscale/tailscaled.sock:/var/run/tailscale/tailscaled.sock
       - /usr/bin/tailscale:/usr/bin/tailscale:ro

@@ -1,0 +1,12 @@
+[Unit]
+Description=Claude Code build jobs
+Before=slices.target
+
+[Slice]
+# Per-slice ceilings shared across every concurrent build. Each transient
+# claude-build-<id>.service lives inside this slice (set via `--slice=` in
+# build-watcher.sh) so a runaway build can't OOM the host or fork-bomb it.
+MemoryMax=6G
+MemoryHigh=4G
+TasksMax=1024
+CPUWeight=100

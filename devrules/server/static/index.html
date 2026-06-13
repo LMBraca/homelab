@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>devrules · context store</title>
+<style>
+  :root{
+    --bg:#0b0c0a; --panel:#111311; --panel2:#171a17;
+    --line:rgba(220,210,180,0.12); --line2:rgba(220,210,180,0.22);
+    --fg:#dcd6c4; --fg2:#8a8474; --muted:#5a5548; --accent:#d79a3a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+       background:var(--bg);color:var(--fg);height:100vh;display:flex;flex-direction:column}
+  header{height:44px;flex:0 0 44px;display:flex;align-items:center;gap:10px;
+         padding:0 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+  header .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+  header b{font-weight:700;letter-spacing:.5px}
+  header span{color:var(--fg2);font-size:12px}
+  main{flex:1;display:flex;min-height:0}
+  aside{width:300px;flex:0 0 300px;border-right:1px solid var(--line);
+        overflow:auto;background:var(--panel)}
+  aside .grp{padding:10px 14px 6px;font-size:11px;text-transform:uppercase;
+             letter-spacing:1px;color:var(--muted)}
+  .item{padding:9px 14px;cursor:pointer;border-left:2px solid transparent}
+  .item:hover{background:var(--panel2)}
+  .item.active{background:var(--panel2);border-left-color:var(--accent)}
+  .item .name{font-size:13px;color:var(--fg)}
+  .item .meta{font-size:11px;color:var(--fg2);margin-top:2px}
+  section{flex:1;overflow:auto;padding:22px 26px;min-width:0}
+  section h1{font-size:15px;font-weight:700;margin-bottom:4px}
+  section .sub{font-size:12px;color:var(--fg2);margin-bottom:18px}
+  pre{white-space:pre-wrap;word-wrap:break-word;font-size:13px;line-height:1.55;
+      color:var(--fg);background:var(--panel);border:1px solid var(--line);
+      border-radius:8px;padding:18px}
+  .empty{color:var(--muted);font-style:italic}
+  .pill{margin-left:auto;font-size:11px;color:var(--fg2)}
+</style>
+</head>
+<body>
+  <header>
+    <div class="dot"></div>
+    <b>devrules</b>
+    <span>shared context store · read-only</span>
+    <span class="pill" id="count"></span>
+  </header>
+  <main>
+    <aside id="sidebar"></aside>
+    <section id="content">
+      <h1>devrules</h1>
+      <div class="sub">Select a project on the left to read its context.</div>
+    </section>
+  </main>
+<script>
+const $ = s => document.querySelector(s);
+let active = null;
+
+async function load(){
+  const [projects, rulesResp] = await Promise.all([
+    fetch('/api/projects').then(r=>r.json()),
+    fetch('/api/rules').then(r=>r.text()),
+  ]);
+  $('#count').textContent = projects.length + ' project' + (projects.length===1?'':'s');
+
+  let html = '<div class="grp">Global</div>';
+  html += `<div class="item" data-kind="rules"><div class="name">rules.md</div>
+           <div class="meta">applies to every project</div></div>`;
+  html += '<div class="grp">Projects</div>';
+  if(!projects.length){
+    html += '<div class="item"><div class="meta">none yet</div></div>';
+  }
+  for(const p of projects){
+    const kb = (p.bytes/1024).toFixed(1);
+    html += `<div class="item" data-kind="project" data-key="${p.project}">
+      <div class="name">${p.project}</div>
+      <div class="meta">${p.updated} · ${kb} KB</div></div>`;
+  }
+  $('#sidebar').innerHTML = html;
+
+  document.querySelectorAll('.item[data-kind]').forEach(el=>{
+    el.addEventListener('click', ()=>select(el));
+  });
+  window._rules = rulesResp;
+}
+
+async function select(el){
+  if(active) active.classList.remove('active');
+  active = el; el.classList.add('active');
+  const kind = el.dataset.kind;
+  if(kind === 'rules'){
+    render('Global rules', 'rules.md', window._rules);
+  } else if(kind === 'project'){
+    const key = el.dataset.key;
+    const d = await fetch('/api/project?key='+encodeURIComponent(key)).then(r=>r.json());
+    render(d.project, 'projects/'+d.project+'/context.md', d.context);
+  }
+}
+
+function render(title, sub, body){
+  const safe = (body||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const content = body && body.trim()
+    ? `<pre>${safe}</pre>`
+    : `<pre class="empty">empty</pre>`;
+  $('#content').innerHTML =
+    `<h1>${title}</h1><div class="sub">${sub}</div>${content}`;
+}
+
+load();
+</script>
+</body>
+</html>

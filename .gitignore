@@ -2,6 +2,11 @@
 **/.env
 **/dashboard-api.env
 **/secrets.yaml
+# Claude OAuth artifacts — live on the server, must never land in git or on Mac
+**/oauth-tokens.env
+**/.credentials.json
+**/.claude-account-*/
+**/.last_refresh
 
 # Databases
 **/*.db

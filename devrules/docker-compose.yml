@@ -1,0 +1,17 @@
+# devrules — shared project-context server. Deploys with the rest of the homelab
+# via ../push-to-server.sh, then: cd /opt/homelab/devrules && docker compose up -d --build
+services:
+  devrules:
+    build: ./server
+    container_name: devrules
+    restart: unless-stopped
+    ports:
+      - "8799:8799"
+    volumes:
+      # Context store lives outside the app dir so redeploys never touch it.
+      - /opt/devrules:/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      TZ: America/Los_Angeles
+      DEVRULES_DATA: /data
+      DEVRULES_PORT: "8799"

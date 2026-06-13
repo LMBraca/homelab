@@ -1,0 +1,19 @@
+[Unit]
+Description=Run fetch-claude-limits.sh when dashboard requests a refresh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=luis
+Group=luis
+# Remove the trigger first so any new clicks during this run get coalesced
+# into the next invocation rather than being lost. The path unit will re-fire
+# if the file reappears while the service is running.
+ExecStartPre=-/bin/rm -f /opt/claude-ideas/.refresh-requested
+ExecStart=/opt/homelab/scripts/claude-ideas/fetch-claude-limits.sh
+# Don't let a stuck refresh run forever — the hourly cron will cover it.
+TimeoutStartSec=90
+
+[Install]
+# Not meant to be enabled directly; the .path unit Wants+Binds this.

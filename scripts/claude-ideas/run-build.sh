@@ -15,7 +15,7 @@ set -euo pipefail
 
 BUILD_ID="${1:-}"
 ACCOUNT="${2:-1}"
-MODEL="${3:-claude-sonnet-4-5}"
+MODEL="${3:-claude-sonnet-4-6}"
 PROJECT_SLUG="${4:-project}"
 PROMPT_FILE="${5:-}"
 
@@ -69,20 +69,53 @@ export CLAUDE_CONFIG_DIR="$HOME/.claude-account-$ACCOUNT"
 write_status "running" "Claude Code is scaffolding the project…"
 
 # ── Run Claude Code ────────────────────────────────────────────────────
+# Wrap in `timeout` so a hung dev-server invocation (npm run dev, tsx watch,
+# etc.) cannot pin the build at "running" forever. The enclosing systemd
+# scope (set up by build-watcher.sh) will reap any leftover children once
+# this script exits.
 PROMPT_CONTENT="$(cat "$PROMPT_FILE")"
+# Tunable via /api/settings (builds.timeout_minutes). Default = 10min.
+SETTINGS_FILE="${SETTINGS_FILE:-/opt/claude-ideas/settings.json}"
+BUILD_TIMEOUT_MIN=$(python3 - "$SETTINGS_FILE" <<'PYEOF' 2>/dev/null || echo 10
+import json, sys
+try:
+    with open(sys.argv[1]) as f:
+        print(int(json.load(f).get("builds", {}).get("timeout_minutes") or 10))
+except Exception:
+    print(10)
+PYEOF
+)
+BUILD_TIMEOUT_SEC=$(( BUILD_TIMEOUT_MIN * 60 ))
 
 cd "$PROJECT_DIR"
 
-claude -p "$PROMPT_CONTENT" \
-    --model "$MODEL" \
-    --no-session-persistence \
-    --allowedTools "Bash,Edit,Write,Read,Glob,Grep" \
-    >> "$LOG_FILE" 2>&1 || {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Claude command failed" >> "$LOG_FILE"
-    write_status "error" "Claude Code failed — check the log for details"
+LOG_SIZE_BEFORE=$(stat -c '%s' "$LOG_FILE" 2>/dev/null || echo 0)
+
+CLAUDE_EXIT=0
+timeout --signal=TERM --kill-after=30s "$BUILD_TIMEOUT_SEC" \
+    claude -p "$PROMPT_CONTENT" \
+        --model "$MODEL" \
+        --no-session-persistence \
+        --allowedTools "Bash,Edit,Write,Read,Glob,Grep" \
+        >> "$LOG_FILE" 2>&1 || CLAUDE_EXIT=$?
+
+if [[ $CLAUDE_EXIT -ne 0 ]]; then
+    LOG_SIZE_AFTER=$(stat -c '%s' "$LOG_FILE" 2>/dev/null || echo 0)
+    LOG_GREW=$((LOG_SIZE_AFTER - LOG_SIZE_BEFORE))
+
+    if [[ $CLAUDE_EXIT -eq 124 || $CLAUDE_EXIT -eq 137 ]]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Claude timed out after ${BUILD_TIMEOUT_SEC}s" >> "$LOG_FILE"
+        write_status "error" "Build timed out after $((BUILD_TIMEOUT_SEC / 60))m — likely hung on a long-running command"
+    elif [[ $LOG_GREW -lt 32 ]]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Claude produced no output before exit $CLAUDE_EXIT — likely API hang" >> "$LOG_FILE"
+        write_status "error" "Claude produced no output (exit $CLAUDE_EXIT) — likely an API/network hang, try rebuilding"
+    else
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Claude command failed (exit $CLAUDE_EXIT)" >> "$LOG_FILE"
+        write_status "error" "Claude Code failed (exit $CLAUDE_EXIT) — check the log for details"
+    fi
     rm -f "$PROMPT_FILE"
     exit 1
-}
+fi
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Claude Code finished. Zipping..." >> "$LOG_FILE"
 write_status "zipping" "Build complete — creating zip…"
