@@ -679,6 +679,17 @@ header{
   color:#d18d2a;padding:8px 12px;font-size:11px;margin-bottom:12px;
   border-left:3px solid #d18d2a;
 }
+/* Advanced (rarely-touched) fields tuck under a collapsed disclosure so the
+   page isn't a wall of knobs. Auto-opens when it holds an overridden value. */
+.set-adv{margin-top:8px;border-top:1px dashed var(--line)}
+.set-adv > summary{
+  cursor:pointer;list-style:none;padding:9px 0 4px;
+  font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg2);
+}
+.set-adv > summary::-webkit-details-marker{display:none}
+.set-adv > summary::before{content:"▸ ";color:var(--accent)}
+.set-adv[open] > summary::before{content:"▾ "}
+.set-adv > summary:hover{color:var(--fg)}
 .set-bar{
   position:sticky;bottom:0;background:var(--panel);
   border-top:1px solid var(--line);padding:10px 14px;
@@ -2810,15 +2821,26 @@ try{
 // Runtime-editable knobs sourced from GET /api/settings. The schema is
 // declared here so the form labels/help text can evolve without touching the
 // backend, while the backend keeps the authoritative validator list.
+// The handful of settings actually touched day-to-day. Everything else in a
+// section is rendered under a collapsed "advanced" disclosure so the page
+// reads as ~6 knobs instead of ~45. A section absent here shows all fields.
+const _PRIMARY_FIELDS = {
+  chat:      ["rules", "context", "default_model"],
+  generator: ["github_user", "model"],
+  builds:    ["timeout_minutes"],
+  dashboard: ["default_theme"],
+  health:    [],   // pure fine-tuning — the whole section lives under advanced
+};
+
 const _settingsSchema = [
   {
     section: "chat",
     title: "chat",
     sub: "the dashboard chatbot — system prompt, tool whitelist, throttle.",
-    warn: "checkboxes here actually control what the bot will do. unchecking a safety rule REMOVES that line from the prompt — pair with the matching allowed-tool to unlock the capability. hover any checkbox for a plain-english explanation.",
+    warn: "checkboxes here control what the bot can do. checking an elevated tool (edit/write/bash/web) grants it AND auto-drops the matching refusal — one switch. read-only is the default. hover any checkbox for a plain-english explanation.",
     fields: [
       {key:"rules", label:"capabilities", type:"rules",
-       help:"refusal rules, the cli tool whitelist, and response-style toggles in one block. each refusal is a line in the system prompt; each tool is passed to --allowedTools. unlocking a capability needs BOTH: uncheck the refusal AND check the tool."},
+       help:"the cli tool whitelist plus refusal and response-style toggles. check a tool to grant it — elevated tools also drop their matching refusal automatically so they actually work. refusals with no matching tool (credentials, services) stay as independent guardrails."},
       {key:"context", label:"server context", type:"textarea",
        help:"informational only — describes what's where on the server. not a rule. clear it if the bot should know nothing about your setup."},
       {key:"default_model", label:"default model", type:"choice",
@@ -3056,13 +3078,28 @@ function _isOverridden(section, key){
 function renderSettings(){
   const out = [];
   for(const sec of _settingsSchema){
-    const rows = sec.fields.map(f => _renderSettingsField(sec.section, f)).join('');
+    const primaryKeys = _PRIMARY_FIELDS[sec.section] || sec.fields.map(f=>f.key);
+    const primary  = sec.fields.filter(f =>  primaryKeys.includes(f.key));
+    const advanced = sec.fields.filter(f => !primaryKeys.includes(f.key));
+    const rows = primary.map(f => _renderSettingsField(sec.section, f)).join('');
+    let advBlock = '';
+    if(advanced.length){
+      const advRows = advanced.map(f => _renderSettingsField(sec.section, f)).join('');
+      // Open by default if any hidden field is overridden, so a non-default
+      // value is never silently buried.
+      const open = advanced.some(f => _isOverridden(sec.section, f.key)) ? ' open' : '';
+      advBlock = `<details class="set-adv"${open}>
+        <summary>advanced · ${advanced.length} setting${advanced.length>1?'s':''}</summary>
+        ${advRows}
+      </details>`;
+    }
     const warn = sec.warn ? `<div class="set-section-warn">${esc(sec.warn)}</div>` : '';
     out.push(`<div class="set-section">
       <h3>${esc(sec.title)}</h3>
       <div class="set-sub">${esc(sec.sub||'')}</div>
       ${warn}
       ${rows}
+      ${advBlock}
     </div>`);
   }
   const dirty = Object.keys(_settingsState.dirty).length > 0;
@@ -3113,7 +3150,7 @@ function _renderSettingsField(section, f){
       const tip = `${info.label}\n— tech: ${info.tech}\n— plain: ${info.plain}`;
       const cls = info.section === 'hard' ? 'set-rule danger' : 'set-rule';
       const blocksLine = info.blocks && info.blocks.length
-        ? `<span class="set-rule-blocks">unchecking unlocks: ${info.blocks.join(', ')}</span>`
+        ? `<span class="set-rule-blocks">auto-drops when you check: ${info.blocks.join(', ')}</span>`
         : '';
       return `<label class="${cls}" title="${esc(tip)}">
         <input type="checkbox" ${checked?'checked':''}
@@ -3144,7 +3181,7 @@ function _renderSettingsField(section, f){
       <div class="set-rules-group-hdr">allowed tools (cli whitelist)</div>
       <div class="set-rules-group-hint">always-safe tools (read-only).</div>
       <div class="set-tools-pick">${_UNGATED_TOOLS.map(renderTool).join('')}</div>
-      <div class="set-rules-group-hint">elevated tools — only fire if you ALSO uncheck the matching refusal above.</div>
+      <div class="set-rules-group-hint">elevated tools — checking one grants it AND auto-drops its matching refusal above. read-only is the default.</div>
       <div class="set-tools-pick">${gatedTools.map(renderTool).join('')}</div>
       <div class="set-rules-group-hdr">response style</div>
       <div class="set-rules-group-hint">tone-of-voice toggles. no security impact — purely cosmetic.</div>

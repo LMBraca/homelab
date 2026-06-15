@@ -810,7 +810,8 @@ def claude_ideas():
 BUILDS_DIR        = "/opt/claude-ideas/builds"
 BUILD_RUNNER      = "/home/luis/scripts/claude-ideas/run-build.sh"
 VALID_MODELS      = {"haiku", "sonnet", "opus",
-                     "claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-7",
+                     "claude-haiku-4-5", "claude-sonnet-4-6",
+                     "claude-opus-4-8", "claude-opus-4-7",
                      "claude-haiku-4-5-20251001"}
 VALID_ACCOUNTS    = {1, 2, 3}
 
@@ -840,7 +841,7 @@ def start_build():
             return jsonify({"error": "account must be 1, 2, or 3"}), 400
 
         # Normalise short model aliases
-        model_map = {"haiku": "claude-haiku-4-5", "sonnet": "claude-sonnet-4-6", "opus": "claude-opus-4-7"}
+        model_map = {"haiku": "claude-haiku-4-5", "sonnet": "claude-sonnet-4-6", "opus": "claude-opus-4-8"}
         model = model_map.get(model, model)
 
         build_id = str(uuid.uuid4())[:8]
@@ -1201,6 +1202,19 @@ VALID_NOTE_STATUS  = {"open", "done"}
 
 CHAT_LOG_FILE        = os.environ.get("CHAT_LOG_FILE",        "/opt/claude-ideas/chat.jsonl")
 CHAT_SESSIONS_DIR    = os.environ.get("CHAT_SESSIONS_DIR",    "/opt/claude-ideas/chat-sessions")
+
+# Where the chatbot is allowed to look. Claude Code sandboxes its file tools
+# (Read/Glob/Grep/Edit) to the working directory and whatever is passed via
+# --add-dir. Without this the bot runs in /app (WORKDIR) — which only holds
+# app.py + dashboard.html — so every grep/read of the data dirs came back
+# empty. CHAT_CWD is the primary root (the dashboard source); CHAT_ADD_DIRS
+# are the other mounted trees the bot reasons about. Only list paths that are
+# actually mounted into the container (see docker-compose volumes).
+CHAT_CWD      = "/app"
+CHAT_ADD_DIRS = [
+    "/opt/claude-ideas",        # ideas, notes, builds queue, generator logs, settings
+    "/home/luis/claude-builds", # finished build outputs
+]
 CHAT_MAX_HISTORY     = 12      # turns of context sent back to claude (6 user + 6 assistant)
 CHAT_TIMEOUT_SEC     = 90      # per-message wall clock
 CHAT_SESSION_TTL     = 7 * 86400  # auto-expire dormant sessions after a week
@@ -1211,12 +1225,13 @@ CHAT_SESSION_TTL     = 7 * 86400  # auto-expire dormant sessions after a week
 CHAT_DEFAULT_CONTEXT = """- Homelab runs Docker services: dashboard-api (Flask, this app), homepage, glances, Nextcloud backup target, Home Assistant twin, Caddy reverse proxy.
 - Idea generator scripts: `/home/luis/scripts/claude-ideas/claude-idea-generator.sh`, build runner, watcher.
 - Data files: `/opt/claude-ideas/{project-ideas.jsonl, graveyard.jsonl, notes.jsonl, generator.log, limits.json}`. Built projects live at `/home/luis/claude-builds/<slug>/`.
-- The dashboard source: `/opt/homelab/homelab-dashboard/api/{app.py, dashboard.html}`."""
+- The dashboard source (your own code) is your working directory: `/app/{app.py, dashboard.html}`. The data dirs `/opt/claude-ideas` and `/home/luis/claude-builds` are also readable."""
 
 # Safety + style rules. Each one becomes a checkbox on the settings page; the
-# composed system prompt only includes the lines whose rule is enabled. So
-# unchecking `no_shell_commands` actually lets the bot run Bash (assuming
-# Bash is also in chat.allowed_tools).
+# composed system prompt only includes the lines whose rule is enabled.
+# Capability is driven by `allowed_tools`: adding Edit/Write/Bash to that list
+# auto-drops the contradicting refusal in _compose_chat_prompt, so you flip one
+# switch (the tool list), not two. Leaving a tool out keeps both layers locked.
 #
 # Format: rule key → (prompt_section, prompt_line). prompt_section is one of
 # "hard" (refusals) or "style" (response shape).
@@ -1241,9 +1256,22 @@ def _compose_chat_prompt(cfg: dict) -> str:
     """Build the system prompt from the structured rules + context. Lets the
     user untoggle e.g. no_shell_commands to actually unlock Bash, instead of
     fighting a frozen monolithic prompt."""
-    rules = cfg.get("rules") or {}
+    rules = dict(cfg.get("rules") or {})
     context = (cfg.get("context") or "").strip()
     allowed = cfg.get("allowed_tools") or "Read,Glob,Grep"
+    allowed_set = {t.strip() for t in allowed.split(",") if t.strip()}
+
+    # Reconcile the refusal rules with the actual tool list so a tool can never
+    # be "allowed but silently refused". If the user adds a capability to
+    # allowed_tools, the contradicting hard rule is dropped automatically — one
+    # switch, not two. The read-only default keeps every write tool OUT of
+    # allowed_tools, so these refusals still fire (defense in depth holds).
+    if allowed_set & {"Edit", "Write"}:
+        rules["no_file_writes"] = False
+    if "Bash" in allowed_set:
+        rules["no_shell_commands"] = False
+    if allowed_set & {"WebFetch", "WebSearch"}:
+        rules["no_network_calls"] = False
 
     parts = [
         f"You are the chatbot embedded in Luis's homelab dashboard. You run inside the dashboard's Flask API on the homelab server and are invoked via `claude -p` with tools restricted to: {allowed}."
@@ -1303,7 +1331,10 @@ SETTINGS_DEFAULTS = {
     "generator": {
         "github_user":         "lmbraca",
         "github_cache_hours":  24,
-        "model":               "haiku",
+        # Idea *quality* lives or dies on this model. haiku produced weak,
+        # generic ideas; sonnet is the floor for usable ideation. Bump to
+        # opus in settings if you want the best ideas and can spend the limit.
+        "model":               "sonnet",
         # Wall clock for the GitHub portfolio fetch. Failure is non-fatal —
         # the generator falls back to the stale cache.
         "github_fetch_timeout_sec": 10,
@@ -1794,7 +1825,7 @@ def chat_send():
 
     sid = _safe_session_id(body.get("conversation_id") or "") or uuid.uuid4().hex[:16]
     requested_model = (body.get("model") or default_model).strip()
-    model_map = {"haiku": "claude-haiku-4-5", "sonnet": "claude-sonnet-4-6", "opus": "claude-opus-4-7"}
+    model_map = {"haiku": "claude-haiku-4-5", "sonnet": "claude-sonnet-4-6", "opus": "claude-opus-4-8"}
     model = model_map.get(requested_model, requested_model)
     if model not in VALID_MODELS:
         return jsonify({"error": f"invalid model: {requested_model}"}), 400
@@ -1840,13 +1871,22 @@ def chat_send():
         # --allowedTools restricts the model to whatever the settings page
         # has whitelisted. Layer 1 of the safety boundary; the system prompt
         # (also editable in settings) is layer 2.
+        # cwd + --add-dir grant the file tools access to the mounted data
+        # trees; without them Read/Glob/Grep are sandboxed to /app and see
+        # only the source. Access != mutation — writes still require Edit/Write
+        # in allowed_tools (read-only by default).
+        cmd = [
+            "claude", "-p", full_prompt,
+            "--model", model,
+            "--no-session-persistence",
+            "--allowedTools", allowed_tools,
+        ]
+        for d in CHAT_ADD_DIRS:
+            if os.path.isdir(d):
+                cmd += ["--add-dir", d]
         result = subprocess.run(
-            [
-                "claude", "-p", full_prompt,
-                "--model", model,
-                "--no-session-persistence",
-                "--allowedTools", allowed_tools,
-            ],
+            cmd,
+            cwd=CHAT_CWD if os.path.isdir(CHAT_CWD) else None,
             env=env,
             capture_output=True,
             text=True,
